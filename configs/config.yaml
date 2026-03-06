@@ -1,0 +1,82 @@
+# ==========================================
+# 1. 问题设置
+# ==========================================
+defaults:
+  - _self_
+  - problems: photocats
+# ==========================================
+# 2. 模型配置 (Models)
+# ==========================================
+models:
+  # 数据集报告模块
+  dataset_report:
+    sci_model: "gpt-4.1-mini"
+    temperature_sci: 0.2
+    coder_model: "gpt-4.1-mini"
+    temperature_coder: 0.2
+  
+  # 文本处理代理 (Text Agent)
+  text_agent:
+    modifier: "gemini-3-pro-preview"
+    llm_eval: "gemini-3-pro-preview"
+  
+  # 搜索代理 (Search Agent)
+  search:
+    code_agent: "gpt-4.1-mini"
+    paper_agent: "gpt-4.1-mini"
+  
+  # Tree COT 模块
+  tree_cot:
+    structure_model: "gpt-4.1-mini"
+    doc_model: "gpt-4.1-mini"
+    code_model: "gpt-5-mini"
+    temperature:
+      structure: 1
+      code: 0.5
+      doc: 0.5
+  
+  # 验证模块
+  verify: "gpt-4.1-mini"
+
+  # MCR 模块
+  mcr:
+    critic_model: "gpt-4.1-mini"
+    engineer_model: "gpt-4.1-mini"
+    auto_opt: "gpt-4.1-mini" # 自动超参数优化agent
+  
+# ==========================================
+# 3. 算法超参数 (Parameters)
+# ==========================================
+parameters:
+  global_max_retry: 3 # 如果幻觉/目标偏离/初始化项目性能完全不动重试次数
+
+  dataset_report:
+    max_turns: 20
+
+  text_eval:
+    JUDGE_ITER: 5 
+    JUDGE_POPULATION: 4
+
+    REFINE_ITER: 2        
+    REFINE_POPULATION: 4
+  # MCR 算法参数
+  mcr:
+    counts: 100
+    timeout: 1200
+    critic:
+      PROPOSAL_COUNT: 3
+      base_temperature: 0.2
+      temp_increment: 0.2
+      temp_min: 0.0
+      temp_max: 1.2
+    engineer:
+      N_GENERATED_VARIANTS: 3
+    auto_opt:
+      AUTO_OPT_ENABLED: True
+      AUTO_OPT_MODE: "Balanced"
+      temperature: 0.15
+  # Tree COT 参数
+  tree_cot:
+    retry_times: 5  # <--- 新增这项，对应原始代码的默认值
+  verify:
+    timeout: 1200
