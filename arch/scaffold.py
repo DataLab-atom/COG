@@ -6,6 +6,7 @@ arch_scaffold: 根据架构树静态生成目录结构和代码骨架。
 """
 from __future__ import annotations
 import os
+import re
 import json
 from typing import Any
 
@@ -38,10 +39,8 @@ def _fn_name(fn_id: str) -> str:
 
 
 def _python_type(t: str) -> str:
-    """将 type:: 引用转换为 Python 类名。"""
-    if t.startswith("type::"):
-        return _type_name(t)
-    return t
+    """将 type:: 引用转换为 Python 类名，支持复合类型如 list[type::Foo]。"""
+    return re.sub(r"type::(\w+)", r"\1", t)
 
 
 def _build_params_str(params: list[dict]) -> str:
