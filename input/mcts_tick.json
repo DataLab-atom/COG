@@ -1,0 +1,22 @@
+{
+  "name": "mcts_tick",
+  "description": "MCTS 单代执行：展开 frontier → beam 选择 → Human Gate → 处理决策。返回新 state 和 should_continue。",
+  "long_running": true,
+  "module": "mcts.tick",
+  "function": "mcts_tick",
+  "async": true,
+  "parameters": {
+    "type": "object",
+    "required": ["state", "project_root", "demand", "tree_text", "timeout"],
+    "properties": {
+      "state": {
+        "type": "object",
+        "description": "当前 MCTS state dict（由 carry 注入）"
+      },
+      "project_root": { "type": "string" },
+      "demand":       { "type": "string" },
+      "tree_text":    { "type": "string" },
+      "timeout":      { "type": "number", "default": 300 }
+    }
+  }
+}

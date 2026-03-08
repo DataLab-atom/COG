@@ -1,0 +1,59 @@
+{
+  "name": "mcts_loop",
+  "description": "MCTS Beam Search 主循环。carry 字段让 state（frontier / consecutive_bad / global_tried 等）在每代结束后对图可见，无需文件侧信道。",
+  "long_running": true,
+  "variables": [
+    "project_root",
+    "demand",
+    "tree_text",
+    "timeout"
+  ],
+  "steps": [
+    {
+      "id": "mcts_init",
+      "type": "input",
+      "ref": "mcts_init",
+      "inputs": {
+        "project_root": "$.project_root",
+        "demand":        "$.demand",
+        "timeout":       "$.timeout"
+      }
+    },
+    {
+      "id": "mcts_tick",
+      "type": "input",
+      "ref": "mcts_tick",
+      "depends_on": ["mcts_init"],
+
+      "carry": {
+        "state": {
+          "init":   "mcts_init.state",
+          "update": "mcts_tick.state"
+        }
+      },
+
+      "inputs": {
+        "state":        "$.carry.state",
+        "project_root": "$.project_root",
+        "demand":       "$.demand",
+        "tree_text":    "$.tree_text",
+        "timeout":      "$.timeout"
+      },
+
+      "loop_to": {
+        "target":           "mcts_tick",
+        "condition":        "{{mcts_tick.should_continue}}",
+        "condition_negate": false,
+        "max_iterations":   9999
+      }
+    }
+  ],
+
+  "outputs": {
+    "final_state":      "mcts_tick.state",
+    "best_score":       "mcts_tick.state.best_score",
+    "generation":       "mcts_tick.state.generation",
+    "frontier":         "mcts_tick.state.frontier",
+    "consecutive_bad":  "mcts_tick.state.consecutive_bad"
+  }
+}

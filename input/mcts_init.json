@@ -1,0 +1,17 @@
+{
+  "name": "mcts_init",
+  "description": "MCTS 初始化：运行 baseline 沙盒获取基准分数，构造根节点和初始 state dict。",
+  "long_running": true,
+  "module": "mcts.tick",
+  "function": "mcts_init",
+  "async": true,
+  "parameters": {
+    "type": "object",
+    "required": ["project_root", "demand", "timeout"],
+    "properties": {
+      "project_root": { "type": "string", "description": "项目根目录绝对路径" },
+      "demand":       { "type": "string", "description": "优化目标描述" },
+      "timeout":      { "type": "number", "description": "沙盒超时秒数", "default": 300 }
+    }
+  }
+}
