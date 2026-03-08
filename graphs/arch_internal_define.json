@@ -17,21 +17,30 @@
       }
     },
     {
-      "id": "backfill",
+      "id": "resolve_needs",
       "type": "tool",
-      "ref": "arch_backfill",
+      "ref": "arch_resolve_needs",
       "depends_on": ["internal_fanout"],
       "inputs": {
         "tree": "internal_fanout.tree"
       }
     },
     {
+      "id": "backfill",
+      "type": "tool",
+      "ref": "arch_backfill",
+      "depends_on": ["resolve_needs"],
+      "inputs": {
+        "tree": "resolve_needs.tree"
+      }
+    },
+    {
       "id": "validate_calls_dag",
       "type": "tool",
       "ref": "arch_validate_dag",
-      "depends_on": ["internal_fanout"],
+      "depends_on": ["resolve_needs"],
       "inputs": {
-        "tree":          "internal_fanout.tree",
+        "tree":          "resolve_needs.tree",
         "check_targets": ["fn_calls"]
       }
     },
