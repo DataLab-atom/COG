@@ -1,8 +1,14 @@
 """
-arch_fn_codegen_fanout: 分两阶段并发为所有函数调用 arch_codegen agent 生成函数体。
+arch_fn_codegen_fanout: 全量并发为所有函数生成函数体，基于调用图依赖排序。
 
-阶段一：并发生成所有 is_init=true 的 __init__ 体
-阶段二：并发生成其余函数体，类方法可读取所属类 __init__ 体（init_body）作为上下文
+设计原则：
+- 全量并发：所有函数在同一 asyncio.gather 中启动
+- 调用图依赖：fn A calls fn B → A 等待 B 的 body 就绪（asyncio.Event），
+  确保 A 生成时能拿到 B 的实际实现作为上下文
+- 类方法依赖：类方法（非 init）等待同类 init_fn 的 body 就绪，
+  与 calls 依赖无关——即使方法不直接 call init_fn 也要等
+- 死锁安全：fn.calls 已由 validate_calls_dag 保证无环，Event 等待不会死锁
+- 失败容错：任一 fn 生成失败时 fallback 为 "pass"，并强制 set Event 解除下游等待
 
 返回 {"fn_bodies": {fn_id: body_code}, "errors": [...]}
 """
@@ -10,7 +16,6 @@ from __future__ import annotations
 import asyncio
 import json
 import httpx
-from typing import Any
 
 from llm_config import LLMConfig, load_config_from_file, run as llm_run
 from utils._base import ToolResult
@@ -98,6 +103,7 @@ async def _codegen_one(
     fn_to_type: dict[str, str],
     config: LLMConfig,
     init_body: str = "无",
+    calls_bodies: dict[str, str] | None = None,
 ) -> tuple[str, str]:
     """返回 (fn_id, body_code)"""
     fn_id = fn["id"]
@@ -116,6 +122,7 @@ async def _codegen_one(
         "params_json":         json.dumps(fn.get("params", []),   ensure_ascii=False),
         "returns_json":        json.dumps(fn.get("returns", {}),  ensure_ascii=False),
         "calls_context_json":  json.dumps(calls_ctx,              ensure_ascii=False),
+        "calls_bodies_json":   json.dumps(calls_bodies or {},     ensure_ascii=False),
         "class_context_json":  json.dumps(class_ctx,              ensure_ascii=False),
         "file_fns_json":       json.dumps(file_fns,               ensure_ascii=False),
         "reference_code":      ref_code or "无",
@@ -125,17 +132,6 @@ async def _codegen_one(
     result = await llm_run(config, variables)
     body = result.get("body", "pass") if isinstance(result, dict) else "pass"
     return fn_id, body
-
-
-def _get_init_body(fn_id: str, fn_to_type: dict, types_map: dict, init_bodies: dict[str, str]) -> str:
-    """查找 fn_id 所属类的 init_fn 已生成的 body，若无则返回 '无'。"""
-    tid = fn_to_type.get(fn_id)
-    if not tid:
-        return "无"
-    init_fn_id = types_map.get(tid, {}).get("init_fn")
-    if not init_fn_id:
-        return "无"
-    return init_bodies.get(init_fn_id, "无")
 
 
 async def arch_fn_codegen_fanout(
@@ -155,54 +151,64 @@ async def arch_fn_codegen_fanout(
         if t.get("init_fn"):
             fn_to_type[t["init_fn"]] = tid
 
-    # 按 is_init 拆分两批
-    init_stubs  = {fid: s for fid, s in fn_stubs.items() if s.get("is_init")}
-    other_stubs = {fid: s for fid, s in fn_stubs.items() if not s.get("is_init")}
-
     fn_bodies: dict[str, str] = {}
     errors:    list[str]      = []
 
-    # ── 阶段一：并发生成所有 __init__ 体 ─────────────────────────────────────
-    if init_stubs:
-        init_ids   = []
-        init_tasks = []
-        for fn_id, stub in init_stubs.items():
-            fn = fns_map.get(fn_id)
-            if not fn:
-                continue
-            init_ids.append(fn_id)
-            init_tasks.append(_codegen_one(fn, stub, files, types_map, fns_map, fn_to_type, config))
+    # ── 每个 fn 一个 Event：body 写入后 set，下游 caller 解除等待 ──────────────
+    fn_events: dict[str, asyncio.Event] = {fid: asyncio.Event() for fid in fn_stubs}
 
-        init_results = await asyncio.gather(*init_tasks, return_exceptions=True)
-        for fn_id, result in zip(init_ids, init_results):
-            if isinstance(result, Exception):
-                errors.append(f"{fn_id} 生成失败: {result}")
-                fn_bodies[fn_id] = "pass  # generation failed"
-            else:
-                _, body = result
-                fn_bodies[fn_id] = body
+    async def _generate(fn_id: str, stub: dict) -> None:
+        fn = fns_map.get(fn_id)
+        if not fn:
+            fn_bodies[fn_id] = "pass"
+            fn_events[fn_id].set()
+            return
 
-    # ── 阶段二：并发生成其余函数体，类方法可读取 init_body ────────────────────
-    if other_stubs:
-        other_ids   = []
-        other_tasks = []
-        for fn_id, stub in other_stubs.items():
-            fn = fns_map.get(fn_id)
-            if not fn:
-                continue
-            init_body = _get_init_body(fn_id, fn_to_type, types_map, fn_bodies)
-            other_ids.append(fn_id)
-            other_tasks.append(
-                _codegen_one(fn, stub, files, types_map, fns_map, fn_to_type, config, init_body)
+        # 1. 等待所有被调函数（calls）的 body 就绪
+        for called_id in fn.get("calls", []):
+            ev = fn_events.get(called_id)
+            if ev:
+                await ev.wait()
+
+        # 2. 若为类方法（非 init），等待同类 init_fn 的 body 就绪
+        if not stub.get("is_init"):
+            tid = fn_to_type.get(fn_id)
+            if tid:
+                init_fn_id = types_map.get(tid, {}).get("init_fn")
+                if init_fn_id:
+                    ev = fn_events.get(init_fn_id)
+                    if ev:
+                        await ev.wait()
+
+        # 3. 收集已就绪的 callee bodies 作为上下文
+        calls_bodies = {
+            called_id: fn_bodies[called_id]
+            for called_id in fn.get("calls", [])
+            if called_id in fn_bodies
+        }
+
+        # 4. 获取 init_body（类方法上下文）
+        tid = fn_to_type.get(fn_id)
+        init_body = "无"
+        if tid and not stub.get("is_init"):
+            init_fn_id = types_map.get(tid, {}).get("init_fn")
+            if init_fn_id:
+                init_body = fn_bodies.get(init_fn_id, "无")
+
+        # 5. 调用 LLM 生成函数体
+        try:
+            _, body = await _codegen_one(
+                fn, stub, files, types_map, fns_map, fn_to_type, config,
+                init_body=init_body,
+                calls_bodies=calls_bodies,
             )
+            fn_bodies[fn_id] = body
+        except Exception as e:
+            errors.append(f"{fn_id} 生成失败: {e}")
+            fn_bodies[fn_id] = "pass  # generation failed"
+        finally:
+            fn_events[fn_id].set()  # 无论成败，解除等待该 fn 的 caller
 
-        other_results = await asyncio.gather(*other_tasks, return_exceptions=True)
-        for fn_id, result in zip(other_ids, other_results):
-            if isinstance(result, Exception):
-                errors.append(f"{fn_id} 生成失败: {result}")
-                fn_bodies[fn_id] = "pass  # generation failed"
-            else:
-                _, body = result
-                fn_bodies[fn_id] = body
+    await asyncio.gather(*[_generate(fid, stub) for fid, stub in fn_stubs.items()])
 
     return ArchFnCodegenFanoutResult(ok=len(errors) == 0, errors=errors, fn_bodies=fn_bodies)

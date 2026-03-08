@@ -10,8 +10,11 @@ is_init: {{is_init}}
 ## 返回值
 {{returns_json}}
 
-## 可调用的函数（calls）
+## 可调用的函数（calls）签名
 {{calls_context_json}}
+
+## 可调用的函数（calls）已生成实现（若已就绪）
+{{calls_bodies_json}}
 
 ## 所属类信息（若为类方法）
 {{class_context_json}}
