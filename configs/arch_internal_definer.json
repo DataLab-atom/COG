@@ -7,7 +7,7 @@
   "system_prompt_path": "./prompts/arch_internal_define/system.txt",
   "user_prompt_path": "./prompts/arch_internal_define/user.txt",
   "system_variables": [],
-  "user_variables": ["requirement", "file_json", "global_ids_json", "depth", "history_defined_json"],
+  "user_variables": ["requirement", "file_json", "global_ids_json", "target_id"],
   "json_output": true,
   "use_instructor": false,
   "json_schema": {
@@ -189,7 +189,7 @@
       }
     }
   },
-  "enable_history": true,
+  "enable_history": false,
   "timeout": 90.0,
   "max_retries": 3,
   "params": {

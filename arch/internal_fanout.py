@@ -1,19 +1,24 @@
-"""
-arch_internal_fanout: 并发为每个 file 迭代调用 arch_internal_definer agent。
+"""arch_internal_fanout: 全量并发为每个 type/fn 调用 arch_internal_definer。
 
-设计原则（对应设计文档 Step 4）：
-- 文件间并发：asyncio.gather 并发处理所有文件
-- 文件内串行：同一 file 的每轮 LLM 调用带历史，必须串行
-- 共享可变状态：files_dict / all_types / all_fns / all_ids 在所有协程间共享
-  （asyncio 单线程协作式调度，await 点之间的同步代码无竞争）
-- 全量 needs 解析：每轮 LLM 返回后，用全量树（所有文件）调用 arch_resolve_needs
-  修复原有 partial_tree 导致跨文件 needs 无法定位目标 file 的根本 bug
+设计原则（重构版，替换原有 per-file 多轮迭代方案）：
+
+两阶段全量并发：
+  Phase 1：所有文件的所有 type:: 并发定义 → 建立 init_fn → overload 依赖关系图
+  Phase 2：所有文件的所有 fn:: 并发定义
+           - init_fn（is_init 函数）：无等待，立即并发执行
+           - overload fn（类成员函数）：等待对应 type 的 init_fn 写入完成（asyncio.Event）
+           - 独立 fn（非任何 type 的 overload）：无等待，立即并发执行
+
+asyncio.Lock：所有共享状态（all_ids / all_types / all_fns / files_dict）的写操作均加锁，
+  保证在引入 ThreadPoolExecutor 或其他真并行执行器时依然安全。
+
+needs 兜底：Phase 2 结束后统一调用 arch_resolve_needs 清空剩余 needs。
 """
 from __future__ import annotations
+
 import asyncio
 import copy
 import json
-from typing import Any
 
 from llm_config import load_config_from_file, run as llm_run
 from utils._base import ToolResult
@@ -30,9 +35,6 @@ class ArchInternalFanoutResult(ToolResult):
     tree: list[dict]  # 完整项目树，供下游步骤直接使用
 
 
-_MAX_ROUNDS = 10  # 单文件最大迭代轮次
-
-
 async def arch_internal_fanout(
     files: list[dict],
     requirement: str,
@@ -41,95 +43,147 @@ async def arch_internal_fanout(
 ) -> ArchInternalFanoutResult:
     config = load_config_from_file("configs/arch_internal_definer.json")
 
-    # ── 共享可变状态（asyncio 单线程，await 点之间无竞争）──────────────────
+    # ── 共享可变状态 ──────────────────────────────────────────────────────────
     files_dict: dict[str, dict] = {f["id"]: copy.deepcopy(f) for f in files}
     all_types: list[dict] = []
-    all_fns: list[dict] = []
-    all_ids: set[str] = set(global_ids)
+    all_fns:   list[dict] = []
+    all_ids:   set[str]   = set(global_ids)
+    all_errors: list[str] = []
+    lock = asyncio.Lock()
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def _process_file(file_id: str) -> dict[str, Any]:
-        """单文件多轮迭代；直接读写外部共享状态。"""
-        file = files_dict[file_id]
-        history: list[dict] = []
-        history_defined: list[dict] = []
-        errors: list[str] = []
+    # ── init_fn 依赖表（Phase 1 完成后填充）──────────────────────────────────
+    # init_fn_id → Event：该 fn 是某 type 的 init_fn，写入完成后 set
+    init_fn_events: dict[str, asyncio.Event] = {}
+    # overload fn_id → Event：需等待对应 type 的 init_fn 写入完成后再执行
+    overload_gate: dict[str, asyncio.Event] = {}
+    # ─────────────────────────────────────────────────────────────────────────
 
-        for round_idx in range(_MAX_ROUNDS):
-            depth = min(round_idx + 1, 3)
+    # ══ Phase 1：并发定义所有 type ════════════════════════════════════════════
 
-            variables = {
-                "requirement":          requirement,
-                "file_json":            json.dumps(file, ensure_ascii=False, indent=2),
-                # 使用共享 all_ids：LLM 能看到其他文件本轮已定义的 id
-                "global_ids_json":      json.dumps(sorted(all_ids), ensure_ascii=False),
-                "depth":                str(depth),
-                "history_defined_json": json.dumps(history_defined, ensure_ascii=False),
-            }
+    async def _define_type(file_id: str, type_id: str) -> None:
+        async with lock:
+            snapshot_ids = sorted(all_ids)
+            file_snap = copy.deepcopy(files_dict[file_id])
 
-            try:
-                result = await llm_run(config, variables, history=history)
-            except Exception as e:
-                errors.append(f"{file_id} 第 {round_idx + 1} 轮失败: {e}")
-                break
+        variables = {
+            "requirement":     requirement,
+            "file_json":       json.dumps(file_snap, ensure_ascii=False, indent=2),
+            "global_ids_json": json.dumps(snapshot_ids, ensure_ascii=False),
+            "target_id":       type_id,
+        }
 
-            if not isinstance(result, dict):
-                break
+        try:
+            result = await llm_run(config, variables)
+        except Exception as e:
+            async with lock:
+                all_errors.append(f"{type_id} 定义失败: {e}")
+            return
 
-            history.append({"role": "assistant", "content": json.dumps(result, ensure_ascii=False)})
+        if not isinstance(result, dict):
+            return
 
-            new_types: list[dict] = result.get("types", [])
-            new_fns:   list[dict] = result.get("functions", [])
+        for t in result.get("types", []):
+            if t.get("id") != type_id:
+                continue
+            t["kind"] = "type"
 
-            if not new_types and not new_fns:
-                break  # 该文件所有节点已定义完毕
+            init_fn_id: str | None = t.get("init_fn")
+            overloads: list[dict]  = t.get("overloads", [])
 
-            # ── 同步更新共享状态（此处无 await，运行原子性）──────────────
-            for t in new_types:
-                t["kind"] = "type"
-                nid = t["id"]
-                if nid not in all_ids:
-                    file.setdefault("types", []).append(nid)
+            async with lock:
+                if type_id not in all_ids:
                     all_types.append(t)
-                    all_ids.add(nid)
-                    history_defined.append({"kind": "type", "id": nid})
+                    all_ids.add(type_id)
+                    flist = files_dict[file_id].setdefault("types", [])
+                    if type_id not in flist:
+                        flist.append(type_id)
 
-            for fn in new_fns:
-                fn["kind"] = "function"
-                nid = fn["id"]
-                if nid not in all_ids:
-                    file.setdefault("functions", []).append(nid)
+                # 建立 init_fn → overload fn 依赖关系
+                if init_fn_id:
+                    ev = asyncio.Event()
+                    init_fn_events[init_fn_id] = ev
+                    for overload in overloads:
+                        fn_id = overload.get("fn")
+                        if fn_id and fn_id != init_fn_id:
+                            overload_gate[fn_id] = ev
+
+            break  # 只取第一个 id 匹配的 type
+
+    type_tasks = [
+        _define_type(file_id, type_id)
+        for file_id, f in files_dict.items()
+        for type_id in list(f.get("types", []))
+    ]
+    await asyncio.gather(*type_tasks)
+
+    # ══ Phase 2：并发定义所有 fn ══════════════════════════════════════════════
+
+    async def _define_fn(file_id: str, fn_id: str) -> None:
+        # overload fn：等待对应 type 的 init_fn 写入完成后再执行
+        gate = overload_gate.get(fn_id)
+        if gate:
+            await gate.wait()
+
+        async with lock:
+            snapshot_ids = sorted(all_ids)
+            file_snap = copy.deepcopy(files_dict[file_id])
+
+        variables = {
+            "requirement":     requirement,
+            "file_json":       json.dumps(file_snap, ensure_ascii=False, indent=2),
+            "global_ids_json": json.dumps(snapshot_ids, ensure_ascii=False),
+            "target_id":       fn_id,
+        }
+
+        try:
+            result = await llm_run(config, variables)
+        except Exception as e:
+            async with lock:
+                all_errors.append(f"{fn_id} 定义失败: {e}")
+            _maybe_set_init_event(fn_id, init_fn_events)
+            return
+
+        if not isinstance(result, dict):
+            _maybe_set_init_event(fn_id, init_fn_events)
+            return
+
+        for fn in result.get("functions", []):
+            if fn.get("id") != fn_id:
+                continue
+            fn["kind"] = "function"
+
+            async with lock:
+                if fn_id not in all_ids:
                     all_fns.append(fn)
-                    all_ids.add(nid)
-                    history_defined.append({"kind": "function", "id": nid})
+                    all_ids.add(fn_id)
+                    flist = files_dict[file_id].setdefault("functions", [])
+                    if fn_id not in flist:
+                        flist.append(fn_id)
 
-            # ── 全量 needs 解析（跨文件核心修复）────────────────────────────
-            # 传入所有文件（files_dict.values()），而非仅当前文件的局部树
-            # arch_resolve_needs 内部 deepcopy，不污染共享状态；结果回写见下方
-            snapshot = (
-                [{"kind": "file", **f} for f in files_dict.values()]
-                + list(all_types)
-                + list(all_fns)
-            )
-            resolved = arch_resolve_needs(snapshot)
+            break  # 只取第一个 id 匹配的 fn
 
-            if not resolved.ok:
-                errors.extend(resolved.errors)
-            else:
-                _apply_resolved(resolved.tree, all_fns, all_ids, files_dict)
+        # init_fn 写入完成 → 解锁等待的 overload fn 们
+        _maybe_set_init_event(fn_id, init_fn_events)
 
-        return {"ok": len(errors) == 0, "errors": errors}
+    fn_tasks = [
+        _define_fn(file_id, fn_id)
+        for file_id, f in files_dict.items()
+        for fn_id in list(f.get("functions", []))
+    ]
+    await asyncio.gather(*fn_tasks)
 
-    # ── 并发处理所有文件 ─────────────────────────────────────────────────────
-    tasks = [_process_file(fid) for fid in files_dict]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    all_errors: list[str] = []
-    for r in results:
-        if isinstance(r, Exception):
-            all_errors.append(f"文件处理失败: {r}")
-        else:
-            all_errors.extend(r.get("errors", []))
+    # ── 全量 needs 解析（兜底）────────────────────────────────────────────────
+    snapshot = (
+        [{"kind": "file", **f} for f in files_dict.values()]
+        + list(all_types)
+        + list(all_fns)
+    )
+    resolved = arch_resolve_needs(snapshot)
+    if resolved.ok:
+        _apply_resolved(resolved.tree, all_fns, all_ids, files_dict)
+    else:
+        all_errors.extend(resolved.errors)
 
     updated_files = list(files_dict.values())
     tree = (
@@ -148,6 +202,16 @@ async def arch_internal_fanout(
         global_ids=sorted(all_ids),
         tree=tree,
     )
+
+
+def _maybe_set_init_event(
+    fn_id: str,
+    init_fn_events: dict[str, asyncio.Event],
+) -> None:
+    """若此 fn 是某 type 的 init_fn，无论成功与否都 set Event，避免 overload fn 死锁。"""
+    ev = init_fn_events.get(fn_id)
+    if ev and not ev.is_set():
+        ev.set()
 
 
 def _apply_resolved(
@@ -179,7 +243,7 @@ def _apply_resolved(
             all_ids.add(fid)
             existing_ids.add(fid)
 
-    # 3. 同步目标 file 的 functions 列表（解析可能把 stub 注入到非当前 file）
+    # 3. 同步目标 file 的 functions 列表
     for file_id, rfile in res_file_map.items():
         if file_id not in files_dict:
             continue
