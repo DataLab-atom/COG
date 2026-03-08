@@ -16,7 +16,7 @@ Requirements:
 - Output ONLY raw Python code — no markdown fences, no explanation text."""
 
 
-def _user_prompt(demand: str, metrics: list[str], task_type: str, dataset_description: str) -> str:
+def _user_prompt(demand: str, metric_description: str, task_type: str, dataset_description: str) -> str:
     return f"""\
 Task demand:
 {demand}
@@ -24,7 +24,9 @@ Task demand:
 Dataset description:
 {dataset_description}
 
-Metrics to compute: {metrics}
+Metric description:
+{metric_description}
+
 Optimization direction: {task_type} ('{task_type}' means {'lower' if task_type == 'minimize' else 'higher'} values are better)
 
 Write the complete `metric_fn.py` with a `compute_metrics` function returning {{"metric_name": float_value, ...}}.\
@@ -44,12 +46,11 @@ class MetricAgent:
         self.llm = OpenAILLM(model=model, module_name="metric_agent", agent_name="metric_agent")
 
         problem_cfg = getattr(cfg, "problems", None) or getattr(cfg, "problem", None)
-        raw_metric = (
+        self.metric_description = str(
             getattr(problem_cfg, "metric", "")
             or getattr(problem_cfg, "task_metric", "")
             or ""
-        )
-        self.metrics = [m.strip() for m in raw_metric.split(",") if m.strip()]
+        ).strip()
         self.task_type = str(getattr(problem_cfg, "task_type", "minimize"))
         self.demand = str(getattr(problem_cfg, "demand", ""))
         self.dataset_description = str(getattr(problem_cfg, "brief_dataset_description", ""))
@@ -62,7 +63,7 @@ class MetricAgent:
                 "role": "user",
                 "content": _user_prompt(
                     demand=self.demand,
-                    metrics=self.metrics,
+                    metric_description=self.metric_description,
                     task_type=self.task_type,
                     dataset_description=self.dataset_description,
                 ),
