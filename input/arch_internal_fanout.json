@@ -1,0 +1,30 @@
+{
+  "name": "arch_internal_fanout",
+  "description": "两阶段全量并发：Phase1 并发定义所有 type::，Phase2 并发定义所有 fn::（类成员函数等待 init_fn 完成），返回所有内部节点定义",
+  "long_running": false,
+  "module": "arch.internal_fanout",
+  "function": "arch_internal_fanout",
+  "async": true,
+  "parameters": {
+    "type": "object",
+    "required": [
+      "files",
+      "requirement",
+      "global_ids"
+    ],
+    "properties": {
+      "files": {
+        "type": "array",
+        "description": "所有 file 定义列表（含叶子节点）"
+      },
+      "requirement": {
+        "type": "string",
+        "description": "原始需求描述"
+      },
+      "global_ids": {
+        "type": "array",
+        "description": "叶子阶段结束后的全局 id 列表"
+      }
+    }
+  }
+}

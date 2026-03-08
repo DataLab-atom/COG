@@ -1,15 +1,29 @@
 """
-arch_backfill: 静态回填以下字段：
-- file.imports[].names  →  根据 file 内 types/functions 实际引用的跨文件 id 推导
-- module.exports        →  根据跨模块引用推导对外暴露的 id
-- module.dependencies   →  根据非 type:: / fn:: 前缀的类型引用推导外部库
-- entrypoint            →  找到 fn::main 并设置
-返回 {"ok": bool, "errors": [str], "tree": [...]}
+arch_backfill: 静态推导并回填架构树中的派生字段。
+
+四步回填：
+1. file.imports[].names：扫描每个 file 内 types/functions 对跨文件 id 的实际引用
+   （字段类型、params 类型、returns 类型、calls），合并到对应 import 条目的 names
+2. module.exports：根据跨模块引用，将被外部模块引用的 id 列入 module.exports
+3. module.dependencies：从 base_class / field 类型 / params 类型 / returns 类型
+   中提取点号分隔的外部库名（如 nn.Module → torch），填入 module.dependencies
+4. entrypoint：找到 fn::main 并设置 {kind: "entrypoint", fn: "fn::main"} 节点；
+   若已存在则更新，否则追加；未找到 fn::main 时记录错误
+
+返回 ArchBackfillResult(ok, errors, tree)
 """
 from __future__ import annotations
 import copy
 import re
 from typing import Any
+
+from utils._base import ToolResult
+
+
+class ArchBackfillResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    tree: list[dict]
 
 
 _BUILTIN_TYPES = {"str", "int", "float", "bool", "list", "dict", "None",
@@ -29,7 +43,7 @@ def _extract_external_libs(type_str: str) -> set[str]:
     return libs
 
 
-def arch_backfill(tree: list[dict]) -> dict[str, Any]:
+def arch_backfill(tree: list[dict]) -> ArchBackfillResult:
     tree = copy.deepcopy(tree)
     errors: list[str] = []
 
@@ -166,4 +180,4 @@ def arch_backfill(tree: list[dict]) -> dict[str, Any]:
     else:
         errors.append("未找到 fn::main，无法设置 entrypoint")
 
-    return {"ok": len(errors) == 0, "errors": errors, "tree": tree}
+    return ArchBackfillResult(ok=len(errors) == 0, errors=errors, tree=tree)

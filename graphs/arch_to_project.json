@@ -16,7 +16,7 @@
     },
     {
       "id": "fn_codegen",
-      "type": "tool",
+      "type": "input",
       "ref": "arch_fn_codegen_fanout",
       "depends_on": ["scaffold"],
       "inputs": {
@@ -35,6 +35,20 @@
         "fn_stubs":   "scaffold.fn_stubs",
         "output_dir": "$.output_dir"
       }
+    },
+    {
+      "id": "syntax_check",
+      "type": "tool",
+      "ref": "arch_syntax_check",
+      "depends_on": ["assemble"],
+      "inputs": {
+        "written": "assemble.written"
+      }
     }
-  ]
+  ],
+  "outputs": {
+    "ok":             "syntax_check.ok",
+    "syntax_errors":  "syntax_check.errors",
+    "written":        "assemble.written"
+  }
 }

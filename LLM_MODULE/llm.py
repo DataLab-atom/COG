@@ -381,12 +381,9 @@ class OpenAILLM:
     ) -> str:
         self._ensure_client()
 
+        msgs: List[Dict[str, Any]] = messages if need_append_msg else list(messages)
+
         if self._is_new:
-            if need_append_msg:
-                msgs= messages
-            else:
-                msgs: List[Dict[str, Any]] = list(messages)
-            
             for _ in range(max_tool_loops):
                 msg = self._request_message_with_retry(
                     lambda: self._client.chat.completions.create(  # type: ignore[union-attr]
@@ -434,10 +431,6 @@ class OpenAILLM:
 
             raise RuntimeError("工具调用循环超过上限，可能存在循环依赖。")
 
-        if need_append_msg:
-            msgs= messages
-        else:
-            msgs: List[Dict[str, Any]] = list(messages)
         for _ in range(max_tool_loops):
             choice = self._request_message_with_retry(
                 lambda: self._client.ChatCompletion.create(  # type: ignore[union-attr]

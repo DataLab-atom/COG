@@ -8,10 +8,10 @@
   "user_prompt_path": "./prompts/arch_codegen/user.txt",
   "system_variables": [],
   "user_variables": [
-    "fn_id", "description", "is_async",
+    "fn_id", "description", "is_async", "is_init",
     "params_json", "returns_json",
-    "calls_context_json", "class_context_json",
-    "file_fns_json", "reference_code"
+    "calls_context_json", "calls_bodies_json", "class_context_json",
+    "file_fns_json", "reference_code", "init_body"
   ],
   "json_output": true,
   "use_instructor": false,

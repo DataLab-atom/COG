@@ -2,7 +2,6 @@
 mcts_inputs — MCTS 异步 Input 函数
 
 供 input/*.json 配置引用（type: "input", async: true）。
-返回 plain dict（与 COG 现有工具保持一致）。
 
 函数列表：
     mcts_sandbox — 沙盒评估：重放累积 patch 链 → 运行 main.py → 解析 __METRICS__
@@ -19,6 +18,16 @@ import uuid
 from typing import Any
 
 from mcretro_mas.engine_optimizer import CodeInjector
+from utils._base import ToolResult
+
+
+class MctsSandboxResult(ToolResult):
+    ok: bool
+    score: float
+    metrics: dict
+    output_log: str
+    error: str
+    all_patches: list[dict]
 
 
 # ── 沙盒评估 ─────────────────────────────────────────────────────────────────
@@ -28,7 +37,7 @@ async def mcts_sandbox(
     ancestor_patches: list[dict],
     new_patch: dict,
     timeout: float = 300,
-) -> dict[str, Any]:
+) -> MctsSandboxResult:
     """
     在隔离沙盒中评估一个候选节点的性能。
 
@@ -66,7 +75,7 @@ def _run_sandbox_sync(
     ancestor_patches: list[dict],
     new_patch: dict,
     timeout: float,
-) -> dict[str, Any]:
+) -> MctsSandboxResult:
     """同步沙盒执行（在 executor 线程中运行）。"""
     trial_id = str(uuid.uuid4())[:8]
     all_patches = list(ancestor_patches) + [new_patch]
@@ -117,14 +126,14 @@ def _run_sandbox_sync(
                 try:
                     metrics = json.loads(line[len(_PREFIX):])
                     score = _score_fn(metrics)
-                    return {
-                        "ok": True,
-                        "score": score,
-                        "metrics": metrics,
-                        "output_log": output,
-                        "error": "",
-                        "all_patches": all_patches,
-                    }
+                    return MctsSandboxResult(
+                        ok=True,
+                        score=score,
+                        metrics=metrics,
+                        output_log=output,
+                        error="",
+                        all_patches=all_patches,
+                    )
                 except Exception as e:
                     return _fail(all_patches, f"metrics parse error: {e}", output)
 
@@ -141,12 +150,12 @@ def _fail(
     all_patches: list[dict],
     error: str,
     output_log: str = "",
-) -> dict[str, Any]:
-    return {
-        "ok": False,
-        "score": -999.0,
-        "metrics": {},
-        "output_log": output_log,
-        "error": error,
-        "all_patches": all_patches,
-    }
+) -> MctsSandboxResult:
+    return MctsSandboxResult(
+        ok=False,
+        score=-999.0,
+        metrics={},
+        output_log=output_log,
+        error=error,
+        all_patches=all_patches,
+    )

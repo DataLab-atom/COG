@@ -7,11 +7,8 @@
 ## 全局已定义 id 列表
 {{global_ids_json}}
 
-## 当前 needs 递归深度
-{{depth}}
+## 本次定义目标
+{{target_id}}
 
-## 本轮已定义（历史）
-{{history_defined_json}}
-
-请定义该文件中剩余的内部节点（有依赖的 type 和 fn），输出 JSON 对象。
-如果该文件所有节点已定义完毕，输出 {"types": [], "functions": []}。
+请仅定义上方指定的目标节点（type:: 或 fn::），输出包含该节点的 JSON 对象。
+不要定义其他节点。如果目标节点已在全局 id 列表中存在，输出 {"types": [], "functions": []}。

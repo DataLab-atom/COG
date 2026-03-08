@@ -4,6 +4,21 @@
 - 内部 type：有 overloads 的类型，overloads.fn 必须指向已定义的 fn:: id
 - 内部 fn：calls 非空的函数，calls 只能引用全局已定义的 fn:: id
 
+## type 字段规则
+- constants：类级别常量（如 HIDDEN_DIM = 256），静态展开到 class body 顶部；不需要则填 []
+- fields：__init__ 参数列表，用于推导方法签名；不需要则填 []
+- init_fn：
+  - 填 null：__init__ 将静态展开为 self.x = x 赋值，适合纯数据类
+  - 填 "fn::<name>"：__init__ 体由 LLM 生成，适合需要实例化子组件的类（如 nn.Module 子类）；
+    同时必须在 functions 中定义该 fn，并标注 is_init: true
+- overloads.fn 必须指向已存在于全局已定义 id 列表中的 fn:: id
+
+## fn is_init 规则
+- 仅当该 fn 是某个 type 的 init_fn 时才标注 is_init: true
+- is_init: true 的 fn 的 params 应与所属 type 的 fields 一致
+- returns 固定为 {"type": "None"}
+- calls 可非空（如需在 __init__ 中调用已定义的 fn::）
+
 ## needs 字段规则
 如果某个 fn 需要一个尚未定义的辅助函数，使用 needs 声明：
 {
@@ -12,7 +27,8 @@
   "params": [{"name": "<name>", "type": "<type>"}],
   "returns": {"type": "<type>"}
 }
-needs 最多递归 3 层（当前层 depth 由系统注入，depth=3 时 needs 必须为空）。
+needs.depth 表示该依赖的递归层数（1–3），由你自行评估填写；深度越高越接近叶子。
+实际 needs 解析由下游 arch_resolve_needs 统一处理，depth=3 的 needs 不会被进一步展开。
 
 ## 输出规则
 - calls 只能引用已存在于全局已定义 id 列表中的 fn:: id
@@ -26,7 +42,9 @@ needs 最多递归 3 层（当前层 depth 由系统注入，depth=3 时 needs �
     {
       "id": "type::<Name>",
       "base_class": "<ClassName>",
+      "constants": [{"name": "<name>", "type": "<type>", "value": <value>}],
       "fields": [{"name": "<name>", "type": "<type>"}],
+      "init_fn": "<fn:: id 或 null>",
       "overloads": [{"method": "<method>", "fn": "fn::<name>", "args": ["<arg>", ...]}]
     }
   ],
@@ -35,6 +53,7 @@ needs 最多递归 3 层（当前层 depth 由系统注入，depth=3 时 needs �
       "id": "fn::<name>",
       "description": "<职责描述>",
       "is_async": <bool>,
+      "is_init": <bool>,
       "params": [{"name": "<name>", "type": "<type>"}],
       "returns": {"type": "<type>"},
       "calls": ["fn::<name>", ...],

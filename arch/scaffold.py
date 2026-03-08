@@ -1,19 +1,48 @@
 """
 arch_scaffold: 根据架构树静态生成目录结构和代码骨架。
-- 为每个 module 创建目录
-- 为每个 file 生成 .py 骨架（imports + constants + 类定义 + 函数 stub）
-- 返回 {"skeletons": {file_path: code}, "fn_stubs": {fn_id: stub_info}}
+
+处理内容：
+- module：为每个模块创建子目录及 __init__.py（含 exports 重新导出）
+  - module.root=True → __init__.py 放置于 output_dir/ 根目录，不创建子目录
+- file：为每个文件生成 .py 骨架（imports、constants、类定义、函数 stub）
+  - file.root=True → .py 文件放置于 output_dir/ 根目录，import 路径仅用文件名
+- 函数体用占位符 {{body:<fn_id>}} 标记，由下游 arch_assemble 填充
+
+返回 ArchScaffoldResult(ok, skeletons, fn_stubs)
+  - skeletons：{file_path: skeleton_code}
+  - fn_stubs：{fn_id: {file_id, class_id, method, indent, is_init?}}
 """
 from __future__ import annotations
 import os
+import re
 import json
 from typing import Any
 
+from utils._base import ToolResult
 
-def _file_id_to_path(file_id: str, output_dir: str) -> str:
-    """file::training/trainer → output_dir/training/trainer.py"""
+
+class ArchScaffoldResult(ToolResult):
+    ok: bool
+    skeletons: dict[str, str]
+    fn_stubs: dict[str, dict]
+
+
+def _file_id_to_path(file_id: str, output_dir: str, root: bool = False) -> str:
+    """file::training/trainer → output_dir/training/trainer.py
+    root=True → output_dir/trainer.py（根目录文件，忽略模块前缀）
+    """
     parts = file_id.replace("file::", "").split("/")
+    if root:
+        return os.path.join(output_dir, parts[-1] + ".py")
     return os.path.join(output_dir, *parts[:-1], parts[-1] + ".py")
+
+
+def _file_import_path(file_id: str, files: dict[str, dict]) -> str:
+    """将 file id 转换为 Python import 路径，root 文件只取文件名。"""
+    parts = file_id.replace("file::", "").split("/")
+    if files.get(file_id, {}).get("root"):
+        return parts[-1]
+    return ".".join(parts)
 
 
 def _module_id_to_dir(module_id: str, output_dir: str) -> str:
@@ -30,10 +59,8 @@ def _fn_name(fn_id: str) -> str:
 
 
 def _python_type(t: str) -> str:
-    """将 type:: 引用转换为 Python 类名。"""
-    if t.startswith("type::"):
-        return _type_name(t)
-    return t
+    """将 type:: 引用转换为 Python 类名，支持复合类型如 list[type::Foo]。"""
+    return re.sub(r"type::(\w+)", r"\1", t)
 
 
 def _build_params_str(params: list[dict]) -> str:
@@ -51,13 +78,12 @@ def _build_import_lines(imports: list[dict], files: dict[str, dict]) -> list[str
         names = imp.get("names", [])
         if not from_id or not names:
             continue
-        parts = from_id.replace("file::", "").split("/")
-        module_path = ".".join(parts)
+        module_path = _file_import_path(from_id, files)
         lines.append(f"from {module_path} import {', '.join(names)}")
     return lines
 
 
-def arch_scaffold(tree: list[dict], output_dir: str) -> dict[str, Any]:
+def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
     modules   = {n["id"]: n for n in tree if n.get("kind") == "module"}
     files     = {n["id"]: n for n in tree if n.get("kind") == "file"}
     types_map = {n["id"]: n for n in tree if n.get("kind") == "type"}
@@ -71,17 +97,19 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> dict[str, Any]:
         for fnid in f.get("functions", []):
             id_to_file[fnid] = fid
 
-    # fn → 所属 type（通过 overloads 反查）
+    # fn → 所属 type（通过 overloads 和 init_fn 反查）
     fn_to_type: dict[str, str] = {}
     for tid, t in types_map.items():
         for ovl in t.get("overloads", []):
             fn_to_type[ovl["fn"]] = tid
+        if t.get("init_fn"):
+            fn_to_type[t["init_fn"]] = tid
 
     skeletons: dict[str, str] = {}
     fn_stubs: dict[str, dict] = {}
 
     for fid, f in files.items():
-        file_path = _file_id_to_path(fid, output_dir)
+        file_path = _file_id_to_path(fid, output_dir, root=f.get("root", False))
         lines: list[str] = []
 
         # imports
@@ -107,17 +135,40 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> dict[str, Any]:
             class_decl = f"class {tname}({base}):" if base else f"class {tname}:"
             lines.append(class_decl)
 
+            # 类级别常量
+            for const in t.get("constants", []):
+                val = json.dumps(const["value"]) if not isinstance(const["value"], str) else repr(const["value"])
+                lines.append(f"    {const['name']}: {const['type']} = {val}")
+            if t.get("constants"):
+                lines.append("")
+
             # __init__
             fields = t.get("fields", [])
-            if fields:
-                field_params = _build_params_str(fields)
+            field_params = _build_params_str(fields) if fields else ""
+            init_fn_id = t.get("init_fn")
+            if init_fn_id:
+                # LLM 生成 __init__ 体
+                sig = f"    def __init__(self, {field_params}):" if field_params else "    def __init__(self):"
+                lines.append(sig)
+                lines.append("{{body:" + init_fn_id + "}}")
+                lines.append("")
+                fn_stubs[init_fn_id] = {
+                    "file_id":  fid,
+                    "class_id": tid,
+                    "method":   "__init__",
+                    "indent":   "        ",
+                    "is_init":  True,
+                }
+            elif fields:
+                # 静态展开 self.x = x
                 lines.append(f"    def __init__(self, {field_params}):")
                 for field in fields:
                     lines.append(f"        self.{field['name']} = {field['name']}")
+                lines.append("")
             else:
                 lines.append("    def __init__(self):")
                 lines.append("        pass")
-            lines.append("")
+                lines.append("")
 
             # overloaded methods
             for ovl in t.get("overloads", []):
@@ -131,7 +182,7 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> dict[str, Any]:
                 async_kw = "async " if fn.get("is_async") else ""
                 sig = f"    {async_kw}def {method_name}(self, {params_str}) -> {ret_type}:"
                 lines.append(sig)
-                lines.append("        {{body:" + fn_id + "}}")
+                lines.append("{{body:" + fn_id + "}}")
                 lines.append("")
 
                 fn_stubs[fn_id] = {
@@ -156,7 +207,7 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> dict[str, Any]:
             async_kw = "async " if fn.get("is_async") else ""
             sig = f"{async_kw}def {fname}({params_str}) -> {ret_type}:"
             lines.append(sig)
-            lines.append("    {{body:" + fnid + "}}")
+            lines.append("{{body:" + fnid + "}}")
             lines.append("")
 
             fn_stubs[fnid] = {
@@ -180,16 +231,10 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> dict[str, Any]:
         init_lines: list[str] = []
         for exp_id in exports:
             name = exp_id.split("::")[-1]
-            # 找到 exp_id 所在的 file
             src_fid = id_to_file.get(exp_id, "")
             if src_fid:
-                parts = src_fid.replace("file::", "").split("/")
-                module_path = ".".join(parts)
+                module_path = _file_import_path(src_fid, files)
                 init_lines.append(f"from {module_path} import {name}")
         skeletons[init_path] = "\n".join(init_lines)
 
-    return {
-        "ok":        True,
-        "skeletons": skeletons,
-        "fn_stubs":  fn_stubs,
-    }
+    return ArchScaffoldResult(ok=True, skeletons=skeletons, fn_stubs=fn_stubs)

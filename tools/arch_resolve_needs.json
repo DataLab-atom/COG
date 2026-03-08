@@ -2,11 +2,13 @@
   "name": "arch_resolve_needs",
   "description": "静态解析所有 fn 的 needs 字段，构造新 fn 定义并插入目标 file，回填 calls",
   "long_running": false,
-  "module": "utils.arch_resolve_needs",
+  "module": "arch.resolve_needs",
   "function": "arch_resolve_needs",
   "parameters": {
     "type": "object",
-    "required": ["tree"],
+    "required": [
+      "tree"
+    ],
     "properties": {
       "tree": {
         "type": "array",

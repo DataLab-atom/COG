@@ -1,0 +1,48 @@
+{
+  "name": "arch_internal_define",
+  "description": "两阶段全量并发定义内部节点（有依赖的 type/fn），解析 needs，回填，验证调用 DAG，静态检查",
+  "long_running": false,
+  "owned_by": "graphs/arch_internal_define.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["files", "requirement", "global_ids"],
+    "properties": {
+      "files": {
+        "type": "array",
+        "description": "arch_leaf_define 输出的文件列表（含叶子节点）"
+      },
+      "requirement": {
+        "type": "string",
+        "description": "原始需求描述"
+      },
+      "global_ids": {
+        "type": "array",
+        "description": "叶子阶段结束后的全局 id 列表"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["ok", "errors", "warnings", "tree"],
+    "properties": {
+      "ok": {
+        "type": "boolean",
+        "description": "静态检查是否全部通过"
+      },
+      "errors": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "检查失败的错误列表"
+      },
+      "warnings": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "警告列表"
+      },
+      "tree": {
+        "type": "array",
+        "description": "完整的项目架构树"
+      }
+    }
+  }
+}

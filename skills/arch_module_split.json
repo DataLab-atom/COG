@@ -1,0 +1,26 @@
+{
+  "name": "arch_module_split",
+  "description": "将需求描述拆分为模块列表，并验证模块间依赖无环",
+  "long_running": false,
+  "owned_by": "graphs/arch_module_split.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["requirement"],
+    "properties": {
+      "requirement": {
+        "type": "string",
+        "description": "自然语言需求描述"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["modules"],
+    "properties": {
+      "modules": {
+        "type": "array",
+        "description": "模块定义列表（扁平 JSON）"
+      }
+    }
+  }
+}

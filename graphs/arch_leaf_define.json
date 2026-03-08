@@ -1,0 +1,39 @@
+{
+  "name": "arch_leaf_define",
+  "description": "叶子定义阶段：并发为每个文件定义无内部依赖的 type/fn，并回填到文件树",
+  "long_running": false,
+  "skills": ["skills/arch_leaf_define.json"],
+  "variables": ["files", "requirement"],
+  "steps": [
+    {
+      "id": "leaf_fanout_raw",
+      "type": "map",
+      "over": "$.files",
+      "as": "file",
+      "step": {
+        "type": "agent",
+        "ref": "configs/arch_leaf_definer.json",
+        "inputs": {
+          "file_json":       "$.file",
+          "global_ids_json": [],
+          "requirement":     "$.requirement"
+        }
+      }
+    },
+    {
+      "id": "leaf_fanout",
+      "type": "tool",
+      "ref": "arch_backfill_leaves",
+      "depends_on": ["leaf_fanout_raw"],
+      "inputs": {
+        "files":        "$.files",
+        "leaf_results": "leaf_fanout_raw",
+        "global_ids":   []
+      }
+    }
+  ],
+  "outputs": {
+    "files":      "leaf_fanout.files",
+    "global_ids": "leaf_fanout.global_ids"
+  }
+}
