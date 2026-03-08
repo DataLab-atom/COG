@@ -2,8 +2,13 @@
 # 问题基本元数据
 # ==========================================
 name: "single_cell"
-task_type: "maximize"  # 对应 TASK_TYPE
-metric: "mlisi"        # 对应 TASK_METRIC
+task_type: "maximize"
+metric: |
+  Use mean Local Inverse Simpson's Index (mLISI) as the primary metric.
+  mLISI measures how well synthetic single-cell data mixes with real test data in a shared
+  embedding space: higher values indicate better integration and realism.
+  The function should return {"mlisi": float}.
+  Higher values are better; a value near the theoretical maximum indicates ideal mixing.
 
 # ==========================================
 # 路径配置 (相对于项目根目录)
