@@ -17,6 +17,11 @@
 - 可以使用 class_context.constants 中的类常量（通过 self.CONST 或直接类名访问）
 - 返回值为 None，不需要 return 语句
 
+## init_body 上下文规则
+当 init_body 非"无"时，表示该函数所属类的 __init__ 已生成，init_body 是其完整函数体：
+- 通过 init_body 可知 self 上挂载了哪些实例变量（self.xxx = ...）
+- 实现本方法时，只能通过 self 访问 init_body 中已初始化的变量，不得引用未初始化的属性
+
 ## 输出格式
 输出一个 JSON 对象：
 {

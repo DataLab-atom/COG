@@ -1,8 +1,10 @@
 """
-arch_fn_codegen_fanout: 并发为所有函数调用 arch_codegen agent 生成函数体。
-- 收集每个函数需要的上下文：calls 签名、所属类字段、同文件函数、reference 代码
-- asyncio.gather 并发调用
-- 返回 {"fn_bodies": {fn_id: body_code}, "errors": [...]}
+arch_fn_codegen_fanout: 分两阶段并发为所有函数调用 arch_codegen agent 生成函数体。
+
+阶段一：并发生成所有 is_init=true 的 __init__ 体
+阶段二：并发生成其余函数体，类方法可读取所属类 __init__ 体（init_body）作为上下文
+
+返回 {"fn_bodies": {fn_id: body_code}, "errors": [...]}
 """
 from __future__ import annotations
 import asyncio
@@ -95,6 +97,7 @@ async def _codegen_one(
     fns_map: dict[str, dict],
     fn_to_type: dict[str, str],
     config: LLMConfig,
+    init_body: str = "无",
 ) -> tuple[str, str]:
     """返回 (fn_id, body_code)"""
     fn_id = fn["id"]
@@ -116,11 +119,23 @@ async def _codegen_one(
         "class_context_json":  json.dumps(class_ctx,              ensure_ascii=False),
         "file_fns_json":       json.dumps(file_fns,               ensure_ascii=False),
         "reference_code":      ref_code or "无",
+        "init_body":           init_body,
     }
 
     result = await llm_run(config, variables)
     body = result.get("body", "pass") if isinstance(result, dict) else "pass"
     return fn_id, body
+
+
+def _get_init_body(fn_id: str, fn_to_type: dict, types_map: dict, init_bodies: dict[str, str]) -> str:
+    """查找 fn_id 所属类的 init_fn 已生成的 body，若无则返回 '无'。"""
+    tid = fn_to_type.get(fn_id)
+    if not tid:
+        return "无"
+    init_fn_id = types_map.get(tid, {}).get("init_fn")
+    if not init_fn_id:
+        return "无"
+    return init_bodies.get(init_fn_id, "无")
 
 
 async def arch_fn_codegen_fanout(
@@ -140,25 +155,54 @@ async def arch_fn_codegen_fanout(
         if t.get("init_fn"):
             fn_to_type[t["init_fn"]] = tid
 
-    tasks = []
-    fn_ids = []
-    for fn_id, stub in fn_stubs.items():
-        fn = fns_map.get(fn_id)
-        if not fn:
-            continue
-        fn_ids.append(fn_id)
-        tasks.append(_codegen_one(fn, stub, files, types_map, fns_map, fn_to_type, config))
-
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    # 按 is_init 拆分两批
+    init_stubs  = {fid: s for fid, s in fn_stubs.items() if s.get("is_init")}
+    other_stubs = {fid: s for fid, s in fn_stubs.items() if not s.get("is_init")}
 
     fn_bodies: dict[str, str] = {}
-    errors: list[str] = []
-    for fn_id, result in zip(fn_ids, results):
-        if isinstance(result, Exception):
-            errors.append(f"{fn_id} 生成失败: {result}")
-            fn_bodies[fn_id] = "pass  # generation failed"
-        else:
-            _, body = result
-            fn_bodies[fn_id] = body
+    errors:    list[str]      = []
+
+    # ── 阶段一：并发生成所有 __init__ 体 ─────────────────────────────────────
+    if init_stubs:
+        init_ids   = []
+        init_tasks = []
+        for fn_id, stub in init_stubs.items():
+            fn = fns_map.get(fn_id)
+            if not fn:
+                continue
+            init_ids.append(fn_id)
+            init_tasks.append(_codegen_one(fn, stub, files, types_map, fns_map, fn_to_type, config))
+
+        init_results = await asyncio.gather(*init_tasks, return_exceptions=True)
+        for fn_id, result in zip(init_ids, init_results):
+            if isinstance(result, Exception):
+                errors.append(f"{fn_id} 生成失败: {result}")
+                fn_bodies[fn_id] = "pass  # generation failed"
+            else:
+                _, body = result
+                fn_bodies[fn_id] = body
+
+    # ── 阶段二：并发生成其余函数体，类方法可读取 init_body ────────────────────
+    if other_stubs:
+        other_ids   = []
+        other_tasks = []
+        for fn_id, stub in other_stubs.items():
+            fn = fns_map.get(fn_id)
+            if not fn:
+                continue
+            init_body = _get_init_body(fn_id, fn_to_type, types_map, fn_bodies)
+            other_ids.append(fn_id)
+            other_tasks.append(
+                _codegen_one(fn, stub, files, types_map, fns_map, fn_to_type, config, init_body)
+            )
+
+        other_results = await asyncio.gather(*other_tasks, return_exceptions=True)
+        for fn_id, result in zip(other_ids, other_results):
+            if isinstance(result, Exception):
+                errors.append(f"{fn_id} 生成失败: {result}")
+                fn_bodies[fn_id] = "pass  # generation failed"
+            else:
+                _, body = result
+                fn_bodies[fn_id] = body
 
     return ArchFnCodegenFanoutResult(ok=len(errors) == 0, errors=errors, fn_bodies=fn_bodies)

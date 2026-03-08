@@ -16,6 +16,9 @@ is_init: {{is_init}}
 ## 所属类信息（若为类方法）
 {{class_context_json}}
 
+## 所属类的 __init__ 体（若已生成）
+{{init_body}}
+
 ## 同文件其它函数
 {{file_fns_json}}
 
