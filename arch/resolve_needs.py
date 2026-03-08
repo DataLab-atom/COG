@@ -73,7 +73,7 @@ def arch_resolve_needs(tree: list[dict]) -> ArchResolveNeedsResult:
                     "params":      need.get("params", []),
                     "returns":     need.get("returns", {"type": "None"}),
                     "calls":       [],
-                    "needs":       [] if depth >= 3 else [],
+                    "needs":       [],
                     "reference":   None,
                 }
 

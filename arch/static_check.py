@@ -6,10 +6,10 @@ arch_static_check: 对完整项目树执行全量静态检查。
 3. file.imports 无环
 4. fn.calls 无环
 5. overloads.args 与 fn:: params 名称一致
-6. needs 全部清空
+6. needs 全部清空（arch_resolve_needs 已统一处理，此处为最终兜底校验）
 7. entrypoint 存在且 fn 可达
 8. exports 合法性（只能包含该 module 旗下 file 中的 id）
-9. depth > 3 的 needs 不存在
+9. 死函数检测（warning：不可达的 fn）
 返回 ArchStaticCheckResult(ok, errors, warnings)
 """
 from __future__ import annotations

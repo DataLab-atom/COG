@@ -12,7 +12,8 @@
 asyncio.Lock：所有共享状态（all_ids / all_types / all_fns / files_dict）的写操作均加锁，
   保证在引入 ThreadPoolExecutor 或其他真并行执行器时依然安全。
 
-needs 兜底：Phase 2 结束后统一调用 arch_resolve_needs 清空剩余 needs。
+needs 解析：fn 返回的 needs 由下游图步骤 arch_resolve_needs 统一处理，
+  internal_fanout 本身不负责 needs 解析，职责单一。
 """
 from __future__ import annotations
 
@@ -22,7 +23,6 @@ import json
 
 from llm_config import load_config_from_file, run as llm_run
 from utils._base import ToolResult
-from arch.resolve_needs import arch_resolve_needs
 
 
 class ArchInternalFanoutResult(ToolResult):
@@ -173,18 +173,6 @@ async def arch_internal_fanout(
     ]
     await asyncio.gather(*fn_tasks)
 
-    # ── 全量 needs 解析（兜底）────────────────────────────────────────────────
-    snapshot = (
-        [{"kind": "file", **f} for f in files_dict.values()]
-        + list(all_types)
-        + list(all_fns)
-    )
-    resolved = arch_resolve_needs(snapshot)
-    if resolved.ok:
-        _apply_resolved(resolved.tree, all_fns, all_ids, files_dict)
-    else:
-        all_errors.extend(resolved.errors)
-
     updated_files = list(files_dict.values())
     tree = (
         [{"kind": "module", **m} for m in (modules or [])]
@@ -212,43 +200,3 @@ def _maybe_set_init_event(
     ev = init_fn_events.get(fn_id)
     if ev and not ev.is_set():
         ev.set()
-
-
-def _apply_resolved(
-    resolved_tree: list[dict],
-    all_fns: list[dict],
-    all_ids: set[str],
-    files_dict: dict[str, dict],
-) -> None:
-    """将 arch_resolve_needs 产生的变化回写到共享状态（同步，无 await）。
-
-    变化类型：
-    1. 已有 fn 的 needs 被清空、calls 被回填 → 原地替换
-    2. needs 解析新生成的 stub fn → 插入 all_fns + 更新目标 file.functions
-    """
-    res_fn_map   = {n["id"]: n for n in resolved_tree if n.get("kind") == "function"}
-    res_file_map = {n["id"]: n for n in resolved_tree if n.get("kind") == "file"}
-
-    # 1. 原地替换已有 fn（needs 清空，calls 回填）
-    for i in range(len(all_fns)):
-        fid = all_fns[i]["id"]
-        if fid in res_fn_map:
-            all_fns[i] = res_fn_map[fid]
-
-    # 2. 插入 stub fn（needs 解析新生成的）
-    existing_ids = {fn["id"] for fn in all_fns}
-    for fid, rfn in res_fn_map.items():
-        if fid not in existing_ids:
-            all_fns.append(rfn)
-            all_ids.add(fid)
-            existing_ids.add(fid)
-
-    # 3. 同步目标 file 的 functions 列表
-    for file_id, rfile in res_file_map.items():
-        if file_id not in files_dict:
-            continue
-        current_fns = set(files_dict[file_id].get("functions", []))
-        for fn_id in rfile.get("functions", []):
-            if fn_id not in current_fns:
-                files_dict[file_id].setdefault("functions", []).append(fn_id)
-                current_fns.add(fn_id)

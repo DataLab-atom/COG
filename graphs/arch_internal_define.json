@@ -1,6 +1,6 @@
 {
   "name": "arch_internal_define",
-  "description": "内部定义阶段：多轮迭代定义有依赖的 type/fn，回填，验证调用 DAG，静态检查",
+  "description": "内部定义阶段：两阶段全量并发定义有依赖的 type/fn，解析 needs，回填，验证调用 DAG，静态检查",
   "long_running": false,
   "skills": ["skills/arch_internal_define.json"],
   "variables": ["files", "requirement", "global_ids", "modules"],
