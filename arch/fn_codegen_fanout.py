@@ -171,14 +171,18 @@ async def arch_fn_codegen_fanout(
                 await ev.wait()
 
         # 2. 若为类方法（非 init），等待同类 init_fn 的 body 就绪
+        #    例外：若 init_fn.calls 包含本 fn（init 调用了该方法），
+        #    step 1 已让 init_fn 等待本 fn，此处反向等待会死锁，跳过。
         if not stub.get("is_init"):
             tid = fn_to_type.get(fn_id)
             if tid:
                 init_fn_id = types_map.get(tid, {}).get("init_fn")
                 if init_fn_id:
-                    ev = fn_events.get(init_fn_id)
-                    if ev:
-                        await ev.wait()
+                    init_fn_data = fns_map.get(init_fn_id, {})
+                    if fn_id not in init_fn_data.get("calls", []):
+                        ev = fn_events.get(init_fn_id)
+                        if ev:
+                            await ev.wait()
 
         # 3. 收集已就绪的 callee bodies 作为上下文
         calls_bodies = {
@@ -188,6 +192,8 @@ async def arch_fn_codegen_fanout(
         }
 
         # 4. 获取 init_body（类方法上下文）
+        #    若 init_fn 调用了本 fn（step 2 跳过了等待），init_fn body 可能尚未就绪，
+        #    此时 fn_bodies.get 返回 "无"，不影响正确性。
         tid = fn_to_type.get(fn_id)
         init_body = "无"
         if tid and not stub.get("is_init"):
