@@ -23,5 +23,7 @@ old_output_programs/
 token_logs/
 problems/*
 outputs/*
+open-agents/
+repo/
 
 
