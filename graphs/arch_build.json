@@ -24,13 +24,29 @@
       }
     },
     {
-      "id": "file_fanout",
-      "type": "input",
-      "ref": "arch_file_fanout",
+      "id": "file_fanout_raw",
+      "type": "map",
+      "over": "module_split.result",
+      "as": "module",
       "depends_on": ["validate_module_dag"],
+      "step": {
+        "type": "agent",
+        "ref": "configs/arch_file_splitter.json",
+        "inputs": {
+          "module_json":      "$.module",
+          "all_modules_json": "module_split.result",
+          "requirement":      "$.requirement"
+        }
+      }
+    },
+    {
+      "id": "file_fanout",
+      "type": "tool",
+      "ref": "arch_backfill_files",
+      "depends_on": ["file_fanout_raw"],
       "inputs": {
-        "modules":     "module_split.result",
-        "requirement": "$.requirement"
+        "modules":    "module_split.result",
+        "file_lists": "file_fanout_raw"
       }
     },
     {
@@ -44,14 +60,30 @@
       }
     },
     {
-      "id": "leaf_fanout",
-      "type": "input",
-      "ref": "arch_leaf_fanout",
+      "id": "leaf_fanout_raw",
+      "type": "map",
+      "over": "file_fanout.files",
+      "as": "file",
       "depends_on": ["validate_file_dag"],
+      "step": {
+        "type": "agent",
+        "ref": "configs/arch_leaf_definer.json",
+        "inputs": {
+          "file_json":       "$.file",
+          "global_ids_json": [],
+          "requirement":     "$.requirement"
+        }
+      }
+    },
+    {
+      "id": "leaf_fanout",
+      "type": "tool",
+      "ref": "arch_backfill_leaves",
+      "depends_on": ["leaf_fanout_raw"],
       "inputs": {
-        "files":       "file_fanout.files",
-        "requirement": "$.requirement",
-        "global_ids":  []
+        "files":        "file_fanout.files",
+        "leaf_results": "leaf_fanout_raw",
+        "global_ids":   []
       }
     },
     {
