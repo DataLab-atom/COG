@@ -132,7 +132,7 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
                 # LLM 生成 __init__ 体
                 sig = f"    def __init__(self, {field_params}):" if field_params else "    def __init__(self):"
                 lines.append(sig)
-                lines.append("        {{body:" + init_fn_id + "}}")
+                lines.append("{{body:" + init_fn_id + "}}")
                 lines.append("")
                 fn_stubs[init_fn_id] = {
                     "file_id":  fid,
@@ -164,7 +164,7 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
                 async_kw = "async " if fn.get("is_async") else ""
                 sig = f"    {async_kw}def {method_name}(self, {params_str}) -> {ret_type}:"
                 lines.append(sig)
-                lines.append("        {{body:" + fn_id + "}}")
+                lines.append("{{body:" + fn_id + "}}")
                 lines.append("")
 
                 fn_stubs[fn_id] = {
@@ -189,7 +189,7 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
             async_kw = "async " if fn.get("is_async") else ""
             sig = f"{async_kw}def {fname}({params_str}) -> {ret_type}:"
             lines.append(sig)
-            lines.append("    {{body:" + fnid + "}}")
+            lines.append("{{body:" + fnid + "}}")
             lines.append("")
 
             fn_stubs[fnid] = {
