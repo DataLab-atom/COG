@@ -1,0 +1,25 @@
+{
+  "name": "mcts_engineer",
+  "description": "根据 Critic 提出的优化方向生成一份替换代码",
+  "long_running": false,
+  "owned_by": "configs/mcts_engineer.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["target_file", "target_type", "target_name", "direction", "reasoning", "original_code"],
+    "properties": {
+      "target_file":   { "type": "string" },
+      "target_type":   { "type": "string" },
+      "target_name":   { "type": "string" },
+      "direction":     { "type": "string" },
+      "reasoning":     { "type": "string" },
+      "original_code": { "type": "string" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["code"],
+    "properties": {
+      "code": { "type": "string", "description": "替换代码字符串" }
+    }
+  }
+}

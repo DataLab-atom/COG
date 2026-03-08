@@ -1,0 +1,11 @@
+Demand:
+{{demand}}
+
+Project tree:
+{{tree_text}}
+
+Optimization history:
+{{history_prompt}}
+
+Last run output:
+{{baseline_log}}

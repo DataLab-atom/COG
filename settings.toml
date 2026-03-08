@@ -1,0 +1,37 @@
+# settings.toml — 项目级配置，可安全提交到 git
+# 敏感信息（API Key）请写在 .secrets.toml，不要写在这里
+
+[default]
+# ── 模型默认值 ──────────────────────────────────────────────
+default_model   = "gpt-4o-mini"
+openai_api_base = ""            # 留空 = 使用 OpenAI 官方端点
+
+# ── 请求默认值 ──────────────────────────────────────────────
+default_timeout     = 30.0
+default_max_retries = 2
+
+# ── 日志 ────────────────────────────────────────────────────
+log_level = "INFO"
+
+
+[development]
+# 开发环境：复用 default，无需额外覆盖
+default_model = "gpt-4o-mini"
+log_level     = "DEBUG"
+
+
+[production]
+# 生产环境：使用更强的模型，更长超时
+default_model       = "gpt-4o"
+default_timeout     = 60.0
+default_max_retries = 3
+log_level           = "WARNING"
+
+
+[vllm]
+# 本地 vLLM 部署环境
+openai_api_base     = "http://localhost:8000/v1"
+openai_api_key      = "EMPTY"              # vLLM 不需要真实 key
+default_model       = "Qwen/Qwen2.5-7B-Instruct"
+default_timeout     = 120.0
+default_max_retries = 1

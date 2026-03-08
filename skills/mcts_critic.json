@@ -1,0 +1,29 @@
+{
+  "name": "mcts_critic",
+  "description": "针对指定 (operator, angle) 组合，从项目代码中识别最优化目标并提出方向",
+  "long_running": false,
+  "owned_by": "configs/mcts_critic.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["op", "angle", "demand", "tree_text", "history_prompt", "baseline_log"],
+    "properties": {
+      "op":             { "type": "string", "description": "优化算子类型" },
+      "angle":          { "type": "string", "description": "优化视角" },
+      "demand":         { "type": "string", "description": "任务需求描述" },
+      "tree_text":      { "type": "string", "description": "项目树文本" },
+      "history_prompt": { "type": "string", "description": "历史优化记录" },
+      "baseline_log":   { "type": "string", "description": "最近一次运行日志" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["target_file", "target_type", "target_name", "direction", "reasoning"],
+    "properties": {
+      "target_file":  { "type": "string" },
+      "target_type":  { "type": "string" },
+      "target_name":  { "type": "string" },
+      "direction":    { "type": "string" },
+      "reasoning":    { "type": "string" }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "read_channel",
+  "description": "从命名通道阻塞读取一条数据，供长期运行节点接收调用方运行时透传的外部数据",
+  "long_running": true,
+  "module": "utils.input_utils",
+  "function": "read_channel",
+  "async": true,
+  "parameters": {
+    "type": "object",
+    "required": ["channel_id"],
+    "properties": {
+      "channel_id": {
+        "type": "string",
+        "description": "通道唯一标识，需由调用方预先通过 create_channel() 创建"
+      },
+      "timeout": {
+        "type": "number",
+        "description": "等待超时秒数，不设则永久阻塞等待",
+        "default": null
+      }
+    }
+  }
+}

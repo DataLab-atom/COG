@@ -1,0 +1,72 @@
+{
+  "name": "mcts_single_combo",
+  "description": "MCTS 单个 (op, angle) 组合的完整评估：Critic 提出优化方向 → Engineer 生成代码 → AST 静态检查 → 沙盒评估",
+  "long_running": true,
+  "skills": ["skills/mcts_single_combo.json"],
+  "variables": [
+    "op", "angle",
+    "demand", "tree_text", "history_prompt", "baseline_log",
+    "project_root", "ancestor_patches", "sandbox_timeout"
+  ],
+  "steps": [
+    {
+      "id": "critic",
+      "type": "agent",
+      "ref": "configs/mcts_critic.json",
+      "inputs": {
+        "op":             "$.op",
+        "angle":          "$.angle",
+        "demand":         "$.demand",
+        "tree_text":      "$.tree_text",
+        "history_prompt": "$.history_prompt",
+        "baseline_log":   "$.baseline_log"
+      }
+    },
+    {
+      "id": "engineer",
+      "type": "agent",
+      "ref": "configs/mcts_engineer.json",
+      "depends_on": ["critic"],
+      "inputs": {
+        "target_file":    "critic.target_file",
+        "target_type":    "critic.target_type",
+        "target_name":    "critic.target_name",
+        "direction":      "critic.direction",
+        "reasoning":      "critic.reasoning",
+        "original_code":  "critic.original_code"
+      }
+    },
+    {
+      "id": "ast_check",
+      "type": "tool",
+      "ref": "mcts_ast_check",
+      "depends_on": ["engineer", "critic"],
+      "inputs": {
+        "code":        "engineer.code",
+        "target_file": "critic.target_file",
+        "target_type": "critic.target_type",
+        "target_name": "critic.target_name"
+      }
+    },
+    {
+      "id": "sandbox",
+      "type": "input",
+      "ref": "mcts_sandbox",
+      "long_running": true,
+      "depends_on": ["ast_check"],
+      "inputs": {
+        "project_root":     "$.project_root",
+        "ancestor_patches": "$.ancestor_patches",
+        "new_patch":        "ast_check.patch",
+        "timeout":          "$.sandbox_timeout"
+      }
+    }
+  ],
+  "outputs": {
+    "op":          "$.op",
+    "angle":       "$.angle",
+    "proposal":    "critic",
+    "ast_ok":      "ast_check.ok",
+    "result":      "sandbox"
+  }
+}

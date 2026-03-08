@@ -1,0 +1,28 @@
+{
+  "name": "mcts_sandbox",
+  "description": "沙盒评估：重放累积 patch 链并运行 main.py 获取性能分数",
+  "long_running": true,
+  "owned_by": "input/mcts_sandbox.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["project_root", "ancestor_patches", "new_patch", "timeout"],
+    "properties": {
+      "project_root":     { "type": "string" },
+      "ancestor_patches": { "type": "array" },
+      "new_patch":        { "type": ["object", "null"] },
+      "timeout":          { "type": "number" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["ok", "score", "metrics", "output_log", "error", "all_patches"],
+    "properties": {
+      "ok":         { "type": "boolean" },
+      "score":      { "type": "number" },
+      "metrics":    { "type": "object" },
+      "output_log": { "type": "string" },
+      "error":      { "type": "string" },
+      "all_patches":{ "type": "array" }
+    }
+  }
+}
