@@ -2,7 +2,6 @@
 # 问题基本元数据
 # ==========================================
 task_name: "photocats"
-task_type: "minimize"
 metric: |
   Use Normalized Mean Squared Error (NMSE) as the primary metric.
   NMSE = mean((y_pred - y_true)^2) / mean((y_true - mean(y_true))^2).

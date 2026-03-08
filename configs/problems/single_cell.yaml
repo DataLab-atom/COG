@@ -2,7 +2,6 @@
 # 问题基本元数据
 # ==========================================
 name: "single_cell"
-task_type: "maximize"
 metric: |
   Use mean Local Inverse Simpson's Index (mLISI) as the primary metric.
   mLISI measures how well synthetic single-cell data mixes with real test data in a shared

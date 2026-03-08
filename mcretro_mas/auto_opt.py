@@ -12,6 +12,9 @@ from typing import Optional, Tuple
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 
+from mcretro_mas.metric_agent import infer_task_type
+
+
 def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
@@ -151,8 +154,8 @@ def main(cfg: DictConfig, project_root: str) -> int:
         mode_map = {"激进": "Aggressive", "平衡": "Balanced", "快速": "Fast"}
         mode = mode_map.get(raw_mode, raw_mode)
         
-        task_type = cfg.problems.task_type
         task_metric = cfg.problems.metric
+        task_type = infer_task_type(task_metric)
         demand = cfg.problems.demand
         
         # LLM 参数

@@ -2,7 +2,6 @@
 # 问题基本元数据
 # ==========================================
 task_name: "longtail"
-task_type: "maximize"
 metric: |
   Use Per-Class Accuracy (macro-averaged accuracy) as the primary metric.
   Compute accuracy separately for each class, then average across all classes with equal weight.

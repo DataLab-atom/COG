@@ -16,7 +16,24 @@ Requirements:
 - Output ONLY raw Python code — no markdown fences, no explanation text."""
 
 
-def _user_prompt(demand: str, metric_description: str, task_type: str, dataset_description: str) -> str:
+def infer_task_type(metric_description: str) -> str:
+    """Infer optimization direction from metric description text.
+
+    Returns "maximize" or "minimize" (default).
+    """
+    text = metric_description.lower()
+    maximize_kws = ("higher", "maximize", "larger", "greater", "maximum", "increase")
+    minimize_kws = ("lower", "minimize", "smaller", "less", "minimum", "decrease", "reduce")
+    for kw in maximize_kws:
+        if kw in text:
+            return "maximize"
+    for kw in minimize_kws:
+        if kw in text:
+            return "minimize"
+    return "minimize"
+
+
+def _user_prompt(demand: str, metric_description: str, dataset_description: str) -> str:
     return f"""\
 Task demand:
 {demand}
@@ -24,10 +41,8 @@ Task demand:
 Dataset description:
 {dataset_description}
 
-Metric description:
+Metric description (includes optimization direction):
 {metric_description}
-
-Optimization direction: {task_type} ('{task_type}' means {'lower' if task_type == 'minimize' else 'higher'} values are better)
 
 Write the complete `metric_fn.py` with a `compute_metrics` function returning {{"metric_name": float_value, ...}}.\
 """
@@ -51,7 +66,6 @@ class MetricAgent:
             or getattr(problem_cfg, "task_metric", "")
             or ""
         ).strip()
-        self.task_type = str(getattr(problem_cfg, "task_type", "minimize"))
         self.demand = str(getattr(problem_cfg, "demand", ""))
         self.dataset_description = str(getattr(problem_cfg, "brief_dataset_description", ""))
 
@@ -64,7 +78,6 @@ class MetricAgent:
                 "content": _user_prompt(
                     demand=self.demand,
                     metric_description=self.metric_description,
-                    task_type=self.task_type,
                     dataset_description=self.dataset_description,
                 ),
             },
