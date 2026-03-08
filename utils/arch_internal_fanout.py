@@ -25,6 +25,7 @@ class ArchInternalFanoutResult(ToolResult):
     types: list[dict]
     functions: list[dict]
     global_ids: list[str]
+    tree: list[dict]  # files + types + functions 合并，供后续步骤直接使用
 
 
 _MAX_ROUNDS = 10  # 单文件最大迭代轮次
@@ -139,6 +140,12 @@ async def arch_internal_fanout(
             if nid not in updated_ids:
                 updated_ids.append(nid)
 
+    tree = (
+        [{"kind": "file", **f} for f in updated_files]
+        + [{"kind": "type", **t} for t in all_types]
+        + [{"kind": "function", **fn} for fn in all_functions]
+    )
+
     return ArchInternalFanoutResult(
         ok=len(errors) == 0,
         errors=errors,
@@ -146,4 +153,5 @@ async def arch_internal_fanout(
         types=all_types,
         functions=all_functions,
         global_ids=updated_ids,
+        tree=tree,
     )
