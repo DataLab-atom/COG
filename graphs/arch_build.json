@@ -1,15 +1,25 @@
 {
   "name": "arch_build",
-  "description": "完整架构构建：模块划分 → 文件划分 → 叶子定义 → 内部定义 → 回填 → 静态检查（扁平 DAG，各步骤后附校验）",
+  "description": "完整架构构建：验证解析 → 模块划分 → 文件划分 → 叶子定义 → 内部定义 → 回填 → 静态检查（扁平 DAG，各步骤后附校验）",
   "long_running": false,
-  "skills": ["skills/arch_builder.json"],
+  "skills": ["skills/arch_builder.json", "skills/validation_agent.json"],
   "variables": ["requirement"],
   "steps": [
+
+    {
+      "id": "validation",
+      "type": "agent",
+      "ref": "configs/validation_agent.json",
+      "inputs": {
+        "requirement": "$.requirement"
+      }
+    },
 
     {
       "id": "module_split",
       "type": "agent",
       "ref": "configs/arch_module_splitter.json",
+      "depends_on": ["validation"],
       "inputs": {
         "requirement": "$.requirement"
       }
@@ -162,9 +172,12 @@
 
   ],
   "outputs": {
-    "ok":       "static_check.ok",
-    "errors":   "static_check.errors",
-    "warnings": "static_check.warnings",
-    "tree":     "backfill.tree"
+    "ok":              "static_check.ok",
+    "errors":          "static_check.errors",
+    "warnings":        "static_check.warnings",
+    "tree":            "backfill.tree",
+    "metric_name":     "validation.metric_name",
+    "direction":       "validation.direction",
+    "metric_fn_code":  "validation.metric_fn_code"
   }
 }

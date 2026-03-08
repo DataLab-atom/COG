@@ -1,0 +1,42 @@
+{
+  "description": "从需求描述中解析优化目标，生成结构化 metric_spec 和可执行的 metric_fn.py 代码",
+  "long_running": false,
+  "skills": ["skills/validation_agent.json"],
+  "agent_name": "validation_agent",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/validation_agent/system.txt",
+  "user_prompt_path": "./prompts/validation_agent/user.txt",
+  "system_variables": [],
+  "user_variables": ["requirement"],
+  "json_output": true,
+  "use_instructor": false,
+  "json_schema": {
+    "type": "object",
+    "required": ["metric_name", "direction", "metric_fn_code"],
+    "additionalProperties": false,
+    "properties": {
+      "metric_name": {
+        "type": "string",
+        "minLength": 1,
+        "description": "标准化指标名称，小写下划线，例如 nmse、per_class_accuracy"
+      },
+      "direction": {
+        "type": "string",
+        "enum": ["minimize", "maximize"],
+        "description": "优化方向：minimize 表示越小越好，maximize 表示越大越好"
+      },
+      "metric_fn_code": {
+        "type": "string",
+        "minLength": 1,
+        "description": "完整的 metric_fn.py 文件内容，包含 compute_metrics 函数"
+      }
+    }
+  },
+  "enable_history": false,
+  "timeout": 60.0,
+  "max_retries": 3,
+  "params": {
+    "max_tokens": 2048,
+    "temperature": 0.2
+  }
+}
