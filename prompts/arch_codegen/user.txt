@@ -1,0 +1,24 @@
+## 函数定义
+id: {{fn_id}}
+description: {{description}}
+is_async: {{is_async}}
+
+## 参数
+{{params_json}}
+
+## 返回值
+{{returns_json}}
+
+## 可调用的函数（calls）
+{{calls_context_json}}
+
+## 所属类信息（若为类方法）
+{{class_context_json}}
+
+## 同文件其它函数
+{{file_fns_json}}
+
+## 参考代码（若有）
+{{reference_code}}
+
+请实现该函数体，输出 JSON 对象。

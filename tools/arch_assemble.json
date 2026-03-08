@@ -1,0 +1,17 @@
+{
+  "name": "arch_assemble",
+  "description": "将函数体填入代码骨架，创建目录结构，写入磁盘，返回生成的文件列表",
+  "long_running": false,
+  "module": "utils.arch_assemble",
+  "function": "arch_assemble",
+  "parameters": {
+    "type": "object",
+    "required": ["skeletons", "fn_bodies", "fn_stubs", "output_dir"],
+    "properties": {
+      "skeletons":  { "type": "object", "description": "{file_path: skeleton_code}" },
+      "fn_bodies":  { "type": "object", "description": "{fn_id: body_code}" },
+      "fn_stubs":   { "type": "object", "description": "{fn_id: stub_info}" },
+      "output_dir": { "type": "string", "description": "项目输出根目录" }
+    }
+  }
+}

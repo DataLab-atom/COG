@@ -1,0 +1,40 @@
+{
+  "name": "arch_to_project",
+  "description": "将架构树（arch_builder 输出）转换为可运行的 Python 项目文件",
+  "long_running": false,
+  "owned_by": "graphs/arch_to_project.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["tree", "output_dir"],
+    "properties": {
+      "tree": {
+        "type": "array",
+        "description": "arch_builder 输出的完整架构树"
+      },
+      "output_dir": {
+        "type": "string",
+        "description": "项目生成的目标目录路径"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["ok", "errors", "written"],
+    "properties": {
+      "ok": {
+        "type": "boolean",
+        "description": "所有文件是否写入成功"
+      },
+      "errors": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "错误列表"
+      },
+      "written": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "成功写入的文件路径列表"
+      }
+    }
+  }
+}
