@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 from dataset_report_module.core import Reporter, reporter_config
 from decision_making_module.plan_evolution import PlanContext, PlanEvolutionModule
+from mcretro_mas.metric_agent import MetricAgent
 from tree_cot.initial_cot import TreeCoTModule
 from verify.verify_module import VerifyModule
 
@@ -85,6 +86,7 @@ class Pipeline:
         self.reporter = Reporter(config=rep_conf, workspace=self.repo_root)
 
         self.plan_evolver = PlanEvolutionModule(self.cfg, project_root=self.repo_root)
+        self.metric_agent = MetricAgent(cfg=self.cfg)
         self.tree_cot = TreeCoTModule(cfg=self.cfg, project_root=self.repo_root)
 
         self.logger.info("Initializing VerifyModule ...")
@@ -122,7 +124,23 @@ class Pipeline:
         )
 
         # ------------------------------------------------------------------
-        # 2) decision(plan evolution) + 3) treecot + verify loop
+        # 2) metric_agent — 在循环外只生成一次
+        # ------------------------------------------------------------------
+        self.logger.info("[2/5] metric_agent start ...")
+        t_metric = time.perf_counter()
+        try:
+            metric_fn_content = self.metric_agent.run()
+        except Exception:
+            self.logger.exception("[2/5] metric_agent failed")
+            raise
+        self.logger.info(
+            "[2/5] metric_agent done | sec=%.2f | metric_fn_len=%s",
+            time.perf_counter() - t_metric,
+            len(metric_fn_content),
+        )
+
+        # ------------------------------------------------------------------
+        # 3) decision(plan evolution) + 4) treecot + verify loop
         # ------------------------------------------------------------------
         current_plan: Optional[str] = None
         last_failure: str = ""
@@ -133,7 +151,7 @@ class Pipeline:
             self.logger.info("=== Try %s/%s ===", attempt, max_retry)
 
             if current_plan is None:
-                self.logger.info("[2/4] plan_evolution generate start ...")
+                self.logger.info("[3/5] plan_evolution generate start ...")
                 t_plan = time.perf_counter()
                 current_plan = self.plan_evolver.run(
                     analysis_report=analysis_report,
@@ -141,13 +159,13 @@ class Pipeline:
                     initial_plan=None,
                 )
                 self.logger.info(
-                    "[2/4] plan_evolution generate done | sec=%.2f | plan_len=%s | plan_preview=%s",
+                    "[3/5] plan_evolution generate done | sec=%.2f | plan_len=%s | plan_preview=%s",
                     time.perf_counter() - t_plan,
                     len(current_plan or ""),
                     _clip(current_plan, 300),
                 )
             else:
-                self.logger.warning("[2/4] plan_evolution refine start | last_failure=%s", _clip(last_failure, 400))
+                self.logger.warning("[3/5] plan_evolution refine start | last_failure=%s", _clip(last_failure, 400))
                 t_refine = time.perf_counter()
                 ctx = PlanContext(
                     user_demand=str(getattr(problem_cfg, "demand", "")),
@@ -156,18 +174,18 @@ class Pipeline:
                 )
                 current_plan = self.plan_evolver.refine_plan(current_plan=current_plan, feedback=last_failure, ctx=ctx)
                 self.logger.info(
-                    "[2/4] plan_evolution refine done | sec=%.2f | plan_len=%s | plan_preview=%s",
+                    "[3/5] plan_evolution refine done | sec=%.2f | plan_len=%s | plan_preview=%s",
                     time.perf_counter() - t_refine,
                     len(current_plan or ""),
                     _clip(current_plan, 300),
                 )
 
-            self.logger.info("[3/4] TreeCoT start ...")
+            self.logger.info("[4/5] TreeCoT start ...")
             t_tree = time.perf_counter()
             try:
-                output_path = self.tree_cot.run(imply_doc=current_plan)
+                output_path = self.tree_cot.run(imply_doc=current_plan, metric_fn_content=metric_fn_content)
             except Exception:
-                self.logger.exception("[3/4] TreeCoT failed")
+                self.logger.exception("[4/5] TreeCoT failed")
                 raise
             last_output_dir = Path(output_path).resolve()
             try:
@@ -180,20 +198,20 @@ class Pipeline:
             except Exception as e:
                 self.logger.warning("Failed to update READ_FILE_EXTRA_DIRS: %s", e)
             self.logger.info(
-                "[3/4] TreeCoT done | sec=%.2f | output_dir=%s",
+                "[4/5] TreeCoT done | sec=%.2f | output_dir=%s",
                 time.perf_counter() - t_tree,
                 str(last_output_dir),
             )
 
-            self.logger.info("[4/4] Verify start | timeout=%s", getattr(self.verifier, "timeout", None))
+            self.logger.info("[5/5] Verify start | timeout=%s", getattr(self.verifier, "timeout", None))
             t_verify = time.perf_counter()
             try:
                 last_verify = self.verifier.run(last_output_dir)
             except Exception:
-                self.logger.exception("[4/4] Verify failed (exception) | output_dir=%s", str(last_output_dir))
+                self.logger.exception("[5/5] Verify failed (exception) | output_dir=%s", str(last_output_dir))
                 raise
             self.logger.info(
-                "[4/4] Verify done | sec=%.2f | passed=%s | total=%s",
+                "[5/5] Verify done | sec=%.2f | passed=%s | total=%s",
                 time.perf_counter() - t_verify,
                 bool(last_verify.get("is_passed")) if isinstance(last_verify, dict) else None,
                 last_verify.get("total_score") if isinstance(last_verify, dict) else None,

@@ -236,7 +236,25 @@ def generate_code_prompt(dev_doc: str, path: str, structure: str) -> str:
 """
 
 
-def combine_code(complete_structure: str, *, dev_doc: str, path: str, task_metric) -> str:
+def combine_code(complete_structure: str, *, dev_doc: str, path: str, task_metric, metric_fn_content: str = "") -> str:
+    if metric_fn_content:
+        metric_section = f"""\
+- **Metric Function**: A pre-written `metric_fn.py` already exists in the project root. \
+Its content is shown below. You MUST import `compute_metrics` from it and call it to obtain \
+the evaluation results — do NOT reimplement the metric logic yourself.
+- **Output Rule**: After calling `compute_metrics(...)`, print the returned dict to stdout on \
+the very last line using: `print("__METRICS__:" + json.dumps(metrics_dict))`.
+
+# Pre-written metric_fn.py (DO NOT modify, just import):
+```python
+{metric_fn_content}
+```"""
+    else:
+        metric_section = f"""\
+- You MUST print the evaluation result(s) to stdout at the end using this exact format: \
+`print("__METRICS__:" + json.dumps({{{task_metric}: value}}))`. \
+The metrics to include are: **{task_metric}**. This must be the last line printed."""
+
     return f"""
 Please assemble the previously implemented code so that the project can run correctly as the main entry point.
 
@@ -247,7 +265,7 @@ Please assemble the previously implemented code so that the project can run corr
 - **Logging Rules**: You must print detailed process information to the console at each major step so the user can track the progress. (e.g., print data shapes after loading, print status before/after optimization, print intermediate metrics, etc.).
 - Set the relevant parameters to reasonable values; do not reduce them for the sake of a quick demonstration.
 - Write the code using the user's **full dataset**.
-- You MUST print the evaluation result(s) to stdout at the end using this exact format: `print("__METRICS__:" + json.dumps({{{task_metric}: value}}))`. The metrics to include are: **{task_metric}**. This must be the last line printed. Do NOT use the old `print("METRIC_RESULT:...")` format.
+{metric_section}
 
 # The following is the complete project structure:
 {complete_structure}

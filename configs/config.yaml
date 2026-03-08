@@ -35,6 +35,9 @@ models:
       code: 0.5
       doc: 0.5
   
+  # 指标函数生成智能体
+  metric_agent: "gpt-4.1-mini"
+
   # 验证模块
   verify: "gpt-4.1-mini"
 

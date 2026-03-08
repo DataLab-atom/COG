@@ -92,12 +92,12 @@ class TreeCoTModule:
         self.node_tree = CircularQueue(2000)
         self.dialogue_queue = CircularQueue(2000)
         self.retry_times = cfg.parameters.tree_cot.retry_times
-    def run(self, imply_doc: Optional[str] = None) -> str:
+    def run(self, imply_doc: Optional[str] = None, metric_fn_content: Optional[str] = None) -> str:
         """
         执行 Tree CoT 流程的主入口
-        :param task_name: 任务名称，用于生成文件路径
-        :param retry_times: 代码生成的重试次数
         :param imply_doc: 可选，Implementation Plan 的内容。如果不传，则尝试从文件读取。
+        :param metric_fn_content: 可选，metric_fn.py 的完整代码字符串。若提供，会写入 dst_dir
+                                   并在 combine_code prompt 中指示 LLM 直接 import 使用。
         :return: 生成的代码输出目录路径
         """
         # 每次运行前重置状态
@@ -142,6 +142,11 @@ class TreeCoTModule:
             raise RuntimeError("Failed to create output folder.")
         dst_path = Path(dst_dir)
 
+        # 写入 metric_fn.py（若由 metric_agent 提供）
+        if metric_fn_content:
+            (dst_path / "metric_fn.py").write_text(metric_fn_content, encoding="utf-8")
+            self.logger.info("metric_fn.py written to %s", dst_path)
+
         # 开始树形对话，细化节点
         self._chat_tree(root, dst_path)
 
@@ -165,7 +170,8 @@ class TreeCoTModule:
             dst_dir=str(dst_path),
             leaf_nodes_data=leaf_nodes_data,
             retry_times=self.retry_times,
-            tree_str=root_str
+            tree_str=root_str,
+            metric_fn_content=metric_fn_content or "",
         )
 
         return str(dst_path)
@@ -348,6 +354,7 @@ class TreeCoTModule:
         retry_times: int,
         *,
         tree_str: str,
+        metric_fn_content: str = "",
     ) -> list[dict[str, Any]]:
         """根据文档和结构生成代码（内存传递，无 .npy 读写）"""
         messages: list[dict[str, Any]] = [{"role": "system", "content": generate_code_system_prompt()}]
@@ -372,7 +379,7 @@ class TreeCoTModule:
             elif i < len(documents) - 1:
                 messages.append({"role": "user", "content": generate_code_prompt(doc, folder_path, structure=file_structure_str)})
             else:
-                messages.append({"role": "user", "content": combine_code(complete_structure=file_structure_str, dev_doc="", path=folder_path, task_metric = self.task_metric)})
+                messages.append({"role": "user", "content": combine_code(complete_structure=file_structure_str, dev_doc="", path=folder_path, task_metric=self.task_metric, metric_fn_content=metric_fn_content)})
                 combined_code, stop = self._test_and_fix_code(retry_times, messages, folder_path)
                 if stop:
                     raise RuntimeError("Failed to generate code after maximum retries.")
