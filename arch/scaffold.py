@@ -79,11 +79,13 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
         for fnid in f.get("functions", []):
             id_to_file[fnid] = fid
 
-    # fn → 所属 type（通过 overloads 反查）
+    # fn → 所属 type（通过 overloads 和 init_fn 反查）
     fn_to_type: dict[str, str] = {}
     for tid, t in types_map.items():
         for ovl in t.get("overloads", []):
             fn_to_type[ovl["fn"]] = tid
+        if t.get("init_fn"):
+            fn_to_type[t["init_fn"]] = tid
 
     skeletons: dict[str, str] = {}
     fn_stubs: dict[str, dict] = {}
@@ -115,17 +117,40 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
             class_decl = f"class {tname}({base}):" if base else f"class {tname}:"
             lines.append(class_decl)
 
+            # 类级别常量
+            for const in t.get("constants", []):
+                val = json.dumps(const["value"]) if not isinstance(const["value"], str) else repr(const["value"])
+                lines.append(f"    {const['name']}: {const['type']} = {val}")
+            if t.get("constants"):
+                lines.append("")
+
             # __init__
             fields = t.get("fields", [])
-            if fields:
-                field_params = _build_params_str(fields)
+            field_params = _build_params_str(fields) if fields else ""
+            init_fn_id = t.get("init_fn")
+            if init_fn_id:
+                # LLM 生成 __init__ 体
+                sig = f"    def __init__(self, {field_params}):" if field_params else "    def __init__(self):"
+                lines.append(sig)
+                lines.append("        {{body:" + init_fn_id + "}}")
+                lines.append("")
+                fn_stubs[init_fn_id] = {
+                    "file_id":  fid,
+                    "class_id": tid,
+                    "method":   "__init__",
+                    "indent":   "        ",
+                    "is_init":  True,
+                }
+            elif fields:
+                # 静态展开 self.x = x
                 lines.append(f"    def __init__(self, {field_params}):")
                 for field in fields:
                     lines.append(f"        self.{field['name']} = {field['name']}")
+                lines.append("")
             else:
                 lines.append("    def __init__(self):")
                 lines.append("        pass")
-            lines.append("")
+                lines.append("")
 
             # overloaded methods
             for ovl in t.get("overloads", []):

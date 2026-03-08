@@ -2,6 +2,7 @@
 id: {{fn_id}}
 description: {{description}}
 is_async: {{is_async}}
+is_init: {{is_init}}
 
 ## 参数
 {{params_json}}

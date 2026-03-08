@@ -48,6 +48,7 @@ def _build_class_context(fn_id: str, types_map: dict, fn_to_type: dict) -> dict:
     return {
         "id":         tid,
         "base_class": t.get("base_class"),
+        "constants":  t.get("constants", []),
         "fields":     t.get("fields", []),
     }
 
@@ -108,6 +109,7 @@ async def _codegen_one(
         "fn_id":               fn_id,
         "description":         fn.get("description", ""),
         "is_async":            str(fn.get("is_async", False)),
+        "is_init":             str(fn.get("is_init", False)),
         "params_json":         json.dumps(fn.get("params", []),   ensure_ascii=False),
         "returns_json":        json.dumps(fn.get("returns", {}),  ensure_ascii=False),
         "calls_context_json":  json.dumps(calls_ctx,              ensure_ascii=False),
@@ -130,11 +132,13 @@ async def arch_fn_codegen_fanout(
     types_map = {n["id"]: n for n in tree if n.get("kind") == "type"}
     fns_map   = {n["id"]: n for n in tree if n.get("kind") == "function"}
 
-    # fn → 所属 type
+    # fn → 所属 type（overloads + init_fn）
     fn_to_type: dict[str, str] = {}
     for tid, t in types_map.items():
         for ovl in t.get("overloads", []):
             fn_to_type[ovl["fn"]] = tid
+        if t.get("init_fn"):
+            fn_to_type[t["init_fn"]] = tid
 
     tasks = []
     fn_ids = []

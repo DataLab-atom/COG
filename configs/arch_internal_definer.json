@@ -19,7 +19,7 @@
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["id", "base_class", "fields", "overloads"],
+          "required": ["id", "base_class", "constants", "fields", "init_fn", "overloads"],
           "additionalProperties": false,
           "properties": {
             "id": {
@@ -29,8 +29,23 @@
             "base_class": {
               "type": ["string", "null"]
             },
+            "constants": {
+              "type": "array",
+              "description": "类级别常量，静态展开到 class body 顶部",
+              "items": {
+                "type": "object",
+                "required": ["name", "type", "value"],
+                "additionalProperties": false,
+                "properties": {
+                  "name":  { "type": "string", "minLength": 1 },
+                  "type":  { "type": "string", "minLength": 1 },
+                  "value": {}
+                }
+              }
+            },
             "fields": {
               "type": "array",
+              "description": "__init__ 参数列表，用于推导方法签名",
               "items": {
                 "type": "object",
                 "required": ["name", "type"],
@@ -40,6 +55,10 @@
                   "type": { "type": "string", "minLength": 1 }
                 }
               }
+            },
+            "init_fn": {
+              "type": ["string", "null"],
+              "description": "null=静态 self.x=x；有值=fn:: id，该函数需标注 is_init:true，走 fn_codegen_fanout"
             },
             "overloads": {
               "type": "array",
@@ -79,6 +98,10 @@
               "minLength": 1
             },
             "is_async": { "type": "boolean" },
+            "is_init": {
+              "type": "boolean",
+              "description": "是否为 __init__ 函数体；scaffold 会将其生成为 __init__ 占位符而非独立函数"
+            },
             "params": {
               "type": "array",
               "items": {
