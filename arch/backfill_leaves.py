@@ -51,6 +51,8 @@ def arch_backfill_leaves(
             files=files, types=[], functions=[], global_ids=updated_ids,
         )
 
+    seen: set[str] = set(updated_ids)
+
     for file, result in zip(files, leaf_results):
         if not isinstance(result, dict):
             errors.append(f"{file.get('id', '?')} 叶子结果不是 dict，跳过")
@@ -61,12 +63,22 @@ def arch_backfill_leaves(
 
         for t in types:
             t["kind"] = "type"
-            file.setdefault("types", []).append(t["id"])
-            updated_ids.append(t["id"])
+            nid = t["id"]
+            if nid in seen:
+                errors.append(f"ID 冲突: '{nid}' (file={file.get('id', '?')}, kind=type)")
+            else:
+                seen.add(nid)
+            file.setdefault("types", []).append(nid)
+            updated_ids.append(nid)
         for fn in fns:
             fn["kind"] = "function"
-            file.setdefault("functions", []).append(fn["id"])
-            updated_ids.append(fn["id"])
+            nid = fn["id"]
+            if nid in seen:
+                errors.append(f"ID 冲突: '{nid}' (file={file.get('id', '?')}, kind=function)")
+            else:
+                seen.add(nid)
+            file.setdefault("functions", []).append(nid)
+            updated_ids.append(nid)
 
         all_types.extend(types)
         all_functions.extend(fns)
