@@ -1,138 +1,54 @@
 {
   "name": "arch_build",
-  "description": "完整架构构建流程：模块划分 → 文件划分 → 叶子定义 → 内部定义 → 静态后处理 → 全量检查",
+  "description": "完整架构构建流程：模块划分 → 文件划分 → 叶子定义 → 内部定义",
   "long_running": false,
   "skills": ["skills/arch_builder.json"],
   "variables": ["requirement"],
   "steps": [
     {
       "id": "module_split",
-      "type": "agent",
-      "ref": "configs/arch_module_splitter.json",
+      "type": "graph",
+      "ref": "graphs/arch_module_split.json",
       "inputs": {
         "requirement": "$.requirement"
       }
     },
     {
-      "id": "validate_module_dag",
-      "type": "tool",
-      "ref": "arch_validate_dag",
+      "id": "file_split",
+      "type": "graph",
+      "ref": "graphs/arch_file_split.json",
       "depends_on": ["module_split"],
       "inputs": {
-        "tree":           "module_split.result",
-        "check_targets":  ["module_imports"]
+        "modules":     "module_split.modules",
+        "requirement": "$.requirement"
       }
     },
     {
-      "id": "file_fanout_raw",
-      "type": "map",
-      "over": "module_split.result",
-      "as": "module",
-      "depends_on": ["validate_module_dag"],
-      "step": {
-        "type": "agent",
-        "ref": "configs/arch_file_splitter.json",
-        "inputs": {
-          "module_json":      "$.module",
-          "all_modules_json": "module_split.result",
-          "requirement":      "$.requirement"
-        }
-      }
-    },
-    {
-      "id": "file_fanout",
-      "type": "tool",
-      "ref": "arch_backfill_files",
-      "depends_on": ["file_fanout_raw"],
+      "id": "leaf_define",
+      "type": "graph",
+      "ref": "graphs/arch_leaf_define.json",
+      "depends_on": ["file_split"],
       "inputs": {
-        "modules":    "module_split.result",
-        "file_lists": "file_fanout_raw"
+        "files":       "file_split.files",
+        "requirement": "$.requirement"
       }
     },
     {
-      "id": "validate_file_dag",
-      "type": "tool",
-      "ref": "arch_validate_dag",
-      "depends_on": ["file_fanout"],
+      "id": "internal_define",
+      "type": "graph",
+      "ref": "graphs/arch_internal_define.json",
+      "depends_on": ["leaf_define"],
       "inputs": {
-        "tree":          "file_fanout.files",
-        "check_targets": ["file_imports"]
-      }
-    },
-    {
-      "id": "leaf_fanout_raw",
-      "type": "map",
-      "over": "file_fanout.files",
-      "as": "file",
-      "depends_on": ["validate_file_dag"],
-      "step": {
-        "type": "agent",
-        "ref": "configs/arch_leaf_definer.json",
-        "inputs": {
-          "file_json":       "$.file",
-          "global_ids_json": [],
-          "requirement":     "$.requirement"
-        }
-      }
-    },
-    {
-      "id": "leaf_fanout",
-      "type": "tool",
-      "ref": "arch_backfill_leaves",
-      "depends_on": ["leaf_fanout_raw"],
-      "inputs": {
-        "files":        "file_fanout.files",
-        "leaf_results": "leaf_fanout_raw",
-        "global_ids":   []
-      }
-    },
-    {
-      "id": "internal_fanout",
-      "type": "input",
-      "ref": "arch_internal_fanout",
-      "depends_on": ["leaf_fanout"],
-      "inputs": {
-        "files":       "leaf_fanout.files",
+        "files":       "leaf_define.files",
         "requirement": "$.requirement",
-        "global_ids":  "leaf_fanout.global_ids"
-      }
-    },
-    {
-      "id": "resolve_needs",
-      "type": "tool",
-      "ref": "arch_resolve_needs",
-      "depends_on": ["internal_fanout"],
-      "inputs": {
-        "tree": "internal_fanout.tree"
-      }
-    },
-    {
-      "id": "backfill",
-      "type": "tool",
-      "ref": "arch_backfill",
-      "depends_on": ["internal_fanout"],
-      "inputs": {
-        "tree": "internal_fanout.tree"
-      }
-    },
-    {
-      "id": "validate_calls_dag",
-      "type": "tool",
-      "ref": "arch_validate_dag",
-      "depends_on": ["internal_fanout"],
-      "inputs": {
-        "tree":          "internal_fanout.tree",
-        "check_targets": ["fn_calls"]
-      }
-    },
-    {
-      "id": "static_check",
-      "type": "tool",
-      "ref": "arch_static_check",
-      "depends_on": ["resolve_needs", "backfill", "validate_calls_dag"],
-      "inputs": {
-        "tree": "backfill.tree"
+        "global_ids":  "leaf_define.global_ids"
       }
     }
-  ]
+  ],
+  "outputs": {
+    "ok":       "internal_define.ok",
+    "errors":   "internal_define.errors",
+    "warnings": "internal_define.warnings",
+    "tree":     "internal_define.tree"
+  }
 }
