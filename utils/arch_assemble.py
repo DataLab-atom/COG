@@ -7,6 +7,14 @@ import os
 import re
 from typing import Any
 
+from utils._base import ToolResult
+
+
+class ArchAssembleResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    written: list[str]
+
 
 def _indent_body(body: str, indent: str) -> str:
     """将函数体每行加上 indent，空行不加。"""
@@ -25,7 +33,7 @@ def arch_assemble(
     fn_bodies:  dict[str, str],
     fn_stubs:   dict[str, dict],
     output_dir: str,
-) -> dict[str, Any]:
+) -> ArchAssembleResult:
     written: list[str] = []
     errors:  list[str] = []
 
@@ -51,4 +59,4 @@ def arch_assemble(
         except Exception as e:
             errors.append(f"写入 {file_path} 失败: {e}")
 
-    return {"ok": len(errors) == 0, "errors": errors, "written": written}
+    return ArchAssembleResult(ok=len(errors) == 0, errors=errors, written=written)

@@ -2,12 +2,20 @@
 arch_scaffold: 根据架构树静态生成目录结构和代码骨架。
 - 为每个 module 创建目录
 - 为每个 file 生成 .py 骨架（imports + constants + 类定义 + 函数 stub）
-- 返回 {"skeletons": {file_path: code}, "fn_stubs": {fn_id: stub_info}}
+- 返回 ArchScaffoldResult(ok, skeletons, fn_stubs)
 """
 from __future__ import annotations
 import os
 import json
 from typing import Any
+
+from utils._base import ToolResult
+
+
+class ArchScaffoldResult(ToolResult):
+    ok: bool
+    skeletons: dict[str, str]
+    fn_stubs: dict[str, dict]
 
 
 def _file_id_to_path(file_id: str, output_dir: str) -> str:
@@ -57,7 +65,7 @@ def _build_import_lines(imports: list[dict], files: dict[str, dict]) -> list[str
     return lines
 
 
-def arch_scaffold(tree: list[dict], output_dir: str) -> dict[str, Any]:
+def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
     modules   = {n["id"]: n for n in tree if n.get("kind") == "module"}
     files     = {n["id"]: n for n in tree if n.get("kind") == "file"}
     types_map = {n["id"]: n for n in tree if n.get("kind") == "type"}
@@ -188,8 +196,4 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> dict[str, Any]:
                 init_lines.append(f"from {module_path} import {name}")
         skeletons[init_path] = "\n".join(init_lines)
 
-    return {
-        "ok":        True,
-        "skeletons": skeletons,
-        "fn_stubs":  fn_stubs,
-    }
+    return ArchScaffoldResult(ok=True, skeletons=skeletons, fn_stubs=fn_stubs)

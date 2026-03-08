@@ -9,7 +9,15 @@ import json
 import copy
 from typing import Any
 
-from llm_config import LLMConfig, run as llm_run
+from llm_config import LLMConfig, load_config_from_file, run as llm_run
+from utils._base import ToolResult
+
+
+class ArchFileFanoutResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    modules: list[dict]
+    files: list[dict]
 
 
 async def _split_one_module(
@@ -33,8 +41,8 @@ async def _split_one_module(
 async def arch_file_fanout(
     modules: list[dict],
     requirement: str,
-) -> dict[str, Any]:
-    config = LLMConfig.from_file("configs/arch_file_splitter.json")
+) -> ArchFileFanoutResult:
+    config = load_config_from_file("configs/arch_file_splitter.json")
     modules = copy.deepcopy(modules)
 
     tasks = [
@@ -54,9 +62,9 @@ async def arch_file_fanout(
         module["files"] = file_ids
         all_files.extend(result)
 
-    return {
-        "ok":      len(errors) == 0,
-        "errors":  errors,
-        "modules": modules,
-        "files":   all_files,
-    }
+    return ArchFileFanoutResult(
+        ok=len(errors) == 0,
+        errors=errors,
+        modules=modules,
+        files=all_files,
+    )

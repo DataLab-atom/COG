@@ -6,13 +6,20 @@ arch_resolve_needs: 静态解析所有 fn 的 needs 字段。
 - 回填原 fn 的 calls 字段
 - 清空 needs
 - 校验 needs.depth <= 3
-返回 {"ok": bool, "errors": [str], "tree": [...]}
+返回 ArchResolveNeedsResult(ok, errors, tree)
 """
 from __future__ import annotations
-import json
 import copy
 import re
 from typing import Any
+
+from utils._base import ToolResult
+
+
+class ArchResolveNeedsResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    tree: list[dict]
 
 
 def _make_fn_id(description: str, existing_ids: set[str]) -> str:
@@ -28,7 +35,7 @@ def _make_fn_id(description: str, existing_ids: set[str]) -> str:
     return candidate
 
 
-def arch_resolve_needs(tree: list[dict]) -> dict[str, Any]:
+def arch_resolve_needs(tree: list[dict]) -> ArchResolveNeedsResult:
     tree = copy.deepcopy(tree)
     errors: list[str] = []
 
@@ -91,4 +98,4 @@ def arch_resolve_needs(tree: list[dict]) -> dict[str, Any]:
     if remaining_needs:
         errors.append(f"以下 fn 的 needs 未清空: {remaining_needs}")
 
-    return {"ok": len(errors) == 0, "errors": errors, "tree": tree}
+    return ArchResolveNeedsResult(ok=len(errors) == 0, errors=errors, tree=tree)

@@ -1,10 +1,16 @@
 """
 arch_validate_dag: 对 module imports、file imports、fn calls 进行有向图环检测。
-返回 {"ok": bool, "errors": [str]}
+返回 ArchValidateDagResult(ok, errors)
 """
 from __future__ import annotations
-import json
 from typing import Any
+
+from utils._base import ToolResult
+
+
+class ArchValidateDagResult(ToolResult):
+    ok: bool
+    errors: list[str]
 
 
 def _detect_cycle(graph: dict[str, list[str]]) -> list[str]:
@@ -34,7 +40,7 @@ def _detect_cycle(graph: dict[str, list[str]]) -> list[str]:
     return cycle_nodes
 
 
-def arch_validate_dag(tree: list[dict], check_targets: list[str]) -> dict[str, Any]:
+def arch_validate_dag(tree: list[dict], check_targets: list[str]) -> ArchValidateDagResult:
     errors: list[str] = []
 
     modules   = {n["id"]: n for n in tree if n.get("kind") == "module"}
@@ -60,4 +66,4 @@ def arch_validate_dag(tree: list[dict], check_targets: list[str]) -> dict[str, A
         if cycle:
             errors.append(f"fn_calls 有环，涉及节点: {cycle}")
 
-    return {"ok": len(errors) == 0, "errors": errors}
+    return ArchValidateDagResult(ok=len(errors) == 0, errors=errors)

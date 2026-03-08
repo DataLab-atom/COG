@@ -13,8 +13,18 @@ import json
 import copy
 from typing import Any
 
-from llm_config import LLMConfig, run as llm_run
+from llm_config import LLMConfig, load_config_from_file, run as llm_run
+from utils._base import ToolResult
 from utils.arch_resolve_needs import arch_resolve_needs
+
+
+class ArchInternalFanoutResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    files: list[dict]
+    types: list[dict]
+    functions: list[dict]
+    global_ids: list[str]
 
 
 _MAX_ROUNDS = 10  # 单文件最大迭代轮次
@@ -77,11 +87,11 @@ async def _define_internals_for_file(
         # 静态解析 needs（伪 tree，仅含当前 file 的新节点）
         partial_tree = [{"kind": "file", **file}] + local_types + local_fns
         resolved = arch_resolve_needs(partial_tree)
-        if not resolved["ok"]:
-            errors.extend(resolved["errors"])
+        if not resolved.ok:
+            errors.extend(resolved.errors)
         else:
             # 把 needs 解析产生的新 fn 追加到本轮收集
-            for node in resolved["tree"]:
+            for node in resolved.tree:
                 if node.get("kind") == "function" and node["id"] not in local_ids:
                     local_fns.append(node)
                     file.setdefault("functions", []).append(node["id"])
@@ -101,8 +111,8 @@ async def arch_internal_fanout(
     files: list[dict],
     requirement: str,
     global_ids: list[str],
-) -> dict[str, Any]:
-    config = LLMConfig.from_file("configs/arch_internal_definer.json")
+) -> ArchInternalFanoutResult:
+    config = load_config_from_file("configs/arch_internal_definer.json")
     files = copy.deepcopy(files)
 
     tasks = [
@@ -129,11 +139,11 @@ async def arch_internal_fanout(
             if nid not in updated_ids:
                 updated_ids.append(nid)
 
-    return {
-        "ok":        len(errors) == 0,
-        "errors":    errors,
-        "files":     updated_files,
-        "types":     all_types,
-        "functions": all_functions,
-        "global_ids": updated_ids,
-    }
+    return ArchInternalFanoutResult(
+        ok=len(errors) == 0,
+        errors=errors,
+        files=updated_files,
+        types=all_types,
+        functions=all_functions,
+        global_ids=updated_ids,
+    )

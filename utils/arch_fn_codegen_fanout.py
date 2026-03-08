@@ -10,7 +10,14 @@ import json
 import httpx
 from typing import Any
 
-from llm_config import LLMConfig, run as llm_run
+from llm_config import LLMConfig, load_config_from_file, run as llm_run
+from utils._base import ToolResult
+
+
+class ArchFnCodegenFanoutResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    fn_bodies: dict[str, str]
 
 
 def _fn_name(fn_id: str) -> str:
@@ -117,8 +124,8 @@ async def _codegen_one(
 async def arch_fn_codegen_fanout(
     tree: list[dict],
     fn_stubs: dict[str, dict],
-) -> dict[str, Any]:
-    config    = LLMConfig.from_file("configs/arch_codegen.json")
+) -> ArchFnCodegenFanoutResult:
+    config    = load_config_from_file("configs/arch_codegen.json")
     files     = {n["id"]: n for n in tree if n.get("kind") == "file"}
     types_map = {n["id"]: n for n in tree if n.get("kind") == "type"}
     fns_map   = {n["id"]: n for n in tree if n.get("kind") == "function"}
@@ -150,4 +157,4 @@ async def arch_fn_codegen_fanout(
             _, body = result
             fn_bodies[fn_id] = body
 
-    return {"ok": len(errors) == 0, "errors": errors, "fn_bodies": fn_bodies}
+    return ArchFnCodegenFanoutResult(ok=len(errors) == 0, errors=errors, fn_bodies=fn_bodies)

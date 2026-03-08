@@ -9,7 +9,17 @@ import json
 import copy
 from typing import Any
 
-from llm_config import LLMConfig, run as llm_run
+from llm_config import LLMConfig, load_config_from_file, run as llm_run
+from utils._base import ToolResult
+
+
+class ArchLeafFanoutResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    files: list[dict]
+    types: list[dict]
+    functions: list[dict]
+    global_ids: list[str]
 
 
 async def _define_leaves_for_file(
@@ -31,8 +41,8 @@ async def arch_leaf_fanout(
     files: list[dict],
     requirement: str,
     global_ids: list[str],
-) -> dict[str, Any]:
-    config = LLMConfig.from_file("configs/arch_leaf_definer.json")
+) -> ArchLeafFanoutResult:
+    config = load_config_from_file("configs/arch_leaf_definer.json")
     files = copy.deepcopy(files)
 
     tasks = [
@@ -66,11 +76,11 @@ async def arch_leaf_fanout(
         all_types.extend(types)
         all_functions.extend(fns)
 
-    return {
-        "ok":        len(errors) == 0,
-        "errors":    errors,
-        "files":     files,
-        "types":     all_types,
-        "functions": all_functions,
-        "global_ids": updated_ids,
-    }
+    return ArchLeafFanoutResult(
+        ok=len(errors) == 0,
+        errors=errors,
+        files=files,
+        types=all_types,
+        functions=all_functions,
+        global_ids=updated_ids,
+    )

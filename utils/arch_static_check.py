@@ -10,15 +10,22 @@ arch_static_check: 对完整项目树执行全量静态检查。
 7. entrypoint 存在且 fn 可达
 8. exports 合法性（只能包含该 module 旗下 file 中的 id）
 9. depth > 3 的 needs 不存在
-返回 {"ok": bool, "errors": [str], "warnings": [str]}
+返回 ArchStaticCheckResult(ok, errors, warnings)
 """
 from __future__ import annotations
 import copy
 from typing import Any
+from utils._base import ToolResult
 from utils.arch_validate_dag import arch_validate_dag
 
 
-def arch_static_check(tree: list[dict]) -> dict[str, Any]:
+class ArchStaticCheckResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    warnings: list[str]
+
+
+def arch_static_check(tree: list[dict]) -> ArchStaticCheckResult:
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -75,7 +82,7 @@ def arch_static_check(tree: list[dict]) -> dict[str, Any]:
     dag_result = arch_validate_dag(
         tree, ["module_imports", "file_imports", "fn_calls"]
     )
-    errors.extend(dag_result.get("errors", []))
+    errors.extend(dag_result.errors)
 
     # 5. overloads.args 与 fn params 一致
     for tid, t in types_map.items():
@@ -127,4 +134,4 @@ def arch_static_check(tree: list[dict]) -> dict[str, Any]:
                     f"{mid} exports={exp_id!r} 不在该模块旗下任何 file 中"
                 )
 
-    return {"ok": len(errors) == 0, "errors": errors, "warnings": warnings}
+    return ArchStaticCheckResult(ok=len(errors) == 0, errors=errors, warnings=warnings)

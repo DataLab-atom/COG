@@ -16,7 +16,7 @@
     },
     {
       "id": "fn_codegen",
-      "type": "tool",
+      "type": "input",
       "ref": "arch_fn_codegen_fanout",
       "depends_on": ["scaffold"],
       "inputs": {

@@ -2,16 +2,23 @@
 mcts_tools — MCTS 搜索工具函数
 
 同步工具，供 tools/*.json 配置引用（type: "tool"）。
-返回 plain dict（与 COG 现有 arch_* 工具保持一致）。
 
 工具列表：
-    mcts_ast_check   — 对 LLM 代码输出执行 AST 语法检查，返回 {ok, patch, error}
+    mcts_ast_check   — 对 LLM 代码输出执行 AST 语法检查，返回 MctAstCheckResult
 """
 from __future__ import annotations
 
 import ast
 import re
 from typing import Any
+
+from utils._base import ToolResult
+
+
+class MctAstCheckResult(ToolResult):
+    ok: bool
+    patch: dict | None
+    error: str
 
 
 # ── 代码清洗 ─────────────────────────────────────────────────────────────────
@@ -29,7 +36,7 @@ def mcts_ast_check(
     target_file: str,
     target_type: str,
     target_name: str,
-) -> dict[str, Any]:
+) -> MctAstCheckResult:
     """
     对 LLM 生成的代码字符串执行 AST 语法检查，并构建完整 patch 对象。
 
@@ -58,6 +65,6 @@ def mcts_ast_check(
             "target_name": target_name,
             "code": clean,
         }
-        return {"ok": True, "patch": patch, "error": ""}
+        return MctAstCheckResult(ok=True, patch=patch, error="")
     except SyntaxError as e:
-        return {"ok": False, "patch": None, "error": str(e)}
+        return MctAstCheckResult(ok=False, patch=None, error=str(e))

@@ -229,7 +229,7 @@ def set_code_to_file(content, file_path):
         # 如果没有找到匹配项，则抛出异常
         raise ValueError("在响应中未找到有效的Python代码块")
     
-    except:
+    except Exception:
         # 如果提取代码失败，则写入一个会直接报错的代码
         error_code = "The content you returned is empty, please return it again.\n"
         with open(file_path, 'w', encoding='utf-8') as code_file:
@@ -273,8 +273,8 @@ def copy_file_with_timestamp(src_path, dst_dir=None):
     except Exception as e:
         print(f"复制文件时出错: {e}")
 
-def copy_code_to_file(content,fila_path):
-    with open(fila_path,'a',encoding='utf-8') as code_file:
+def copy_code_to_file(content, file_path):
+    with open(file_path, 'a', encoding='utf-8') as code_file:
             code_file.write(content)
             code_file.write('\n')
 
@@ -354,12 +354,6 @@ def convert_to_multiway(root):
         return new_node
     
     return process_node(root)
-
-import os
-import subprocess
-from anytree import Node, RenderTree
-# 假设你有这些导入，如果没有则需要添加
-# from anytree.exporter import DotExporter 
 
 def visualize_tree(multiway_root, filename="tree_structure"):
     """生成纯节点结构图"""
@@ -484,25 +478,6 @@ def create_folder_with_timestamp(folder_name, base_directory=None):
     except Exception as e:
         print(f"文件夹创建失败: {e}")
         return None
-
-"""
-def save_module_design(module_data, root_dir=""):
-    '''保存模块设计文档到结构化目录'''
-    
-    # 1. 生成唯一文件名或使用模块名
-    module_name = module_data["moduleName"].strip().replace(" ", "_")
-
-    # 2. 创建模块目录
-    doc_dir = os.path.join(root_dir, "json_doc")  # 例如: "project_docs/doc"
-    os.makedirs(doc_dir, exist_ok=True)  # 自动创建目录（如果不存在）
-    # 3. 保存主设计文件
-    design_path = os.path.join(doc_dir, f"{module_name}.json")
-    with open(design_path, "w", encoding="utf-8") as f:
-        json.dump(module_data, f, ensure_ascii=False, indent=2)
-    
-    print(f"模块文档已保存至: {design_path}")
-    return design_path
-"""
 
 def save_module_design(module_data, cls, root_dir=""):
     """保存模块设计文档到结构化目录"""

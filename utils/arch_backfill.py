@@ -4,12 +4,20 @@ arch_backfill: 静态回填以下字段：
 - module.exports        →  根据跨模块引用推导对外暴露的 id
 - module.dependencies   →  根据非 type:: / fn:: 前缀的类型引用推导外部库
 - entrypoint            →  找到 fn::main 并设置
-返回 {"ok": bool, "errors": [str], "tree": [...]}
+返回 ArchBackfillResult(ok, errors, tree)
 """
 from __future__ import annotations
 import copy
 import re
 from typing import Any
+
+from utils._base import ToolResult
+
+
+class ArchBackfillResult(ToolResult):
+    ok: bool
+    errors: list[str]
+    tree: list[dict]
 
 
 _BUILTIN_TYPES = {"str", "int", "float", "bool", "list", "dict", "None",
@@ -29,7 +37,7 @@ def _extract_external_libs(type_str: str) -> set[str]:
     return libs
 
 
-def arch_backfill(tree: list[dict]) -> dict[str, Any]:
+def arch_backfill(tree: list[dict]) -> ArchBackfillResult:
     tree = copy.deepcopy(tree)
     errors: list[str] = []
 
@@ -166,4 +174,4 @@ def arch_backfill(tree: list[dict]) -> dict[str, Any]:
     else:
         errors.append("未找到 fn::main，无法设置 entrypoint")
 
-    return {"ok": len(errors) == 0, "errors": errors, "tree": tree}
+    return ArchBackfillResult(ok=len(errors) == 0, errors=errors, tree=tree)
