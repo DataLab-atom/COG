@@ -2,11 +2,14 @@
   "name": "arch_validate_dag",
   "description": "对 module imports、file imports、fn calls 进行有向图环检测",
   "long_running": false,
-  "module": "utils.arch_validate_dag",
+  "module": "arch.validate_dag",
   "function": "arch_validate_dag",
   "parameters": {
     "type": "object",
-    "required": ["tree", "check_targets"],
+    "required": [
+      "tree",
+      "check_targets"
+    ],
     "properties": {
       "tree": {
         "type": "array",
@@ -14,7 +17,14 @@
       },
       "check_targets": {
         "type": "array",
-        "items": { "type": "string", "enum": ["module_imports", "file_imports", "fn_calls"] },
+        "items": {
+          "type": "string",
+          "enum": [
+            "module_imports",
+            "file_imports",
+            "fn_calls"
+          ]
+        },
         "description": "需要检查的目标列表"
       }
     }

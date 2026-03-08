@@ -2,12 +2,17 @@
   "name": "mcts_sandbox",
   "description": "MCTS 沙盒评估：在隔离临时目录中重放节点祖先链的全部 patch，运行 main.py 并解析 __METRICS__ 输出返回评分",
   "long_running": true,
-  "module": "utils.mcts_inputs",
+  "module": "mcts.inputs",
   "function": "mcts_sandbox",
   "async": true,
   "parameters": {
     "type": "object",
-    "required": ["project_root", "ancestor_patches", "new_patch", "timeout"],
+    "required": [
+      "project_root",
+      "ancestor_patches",
+      "new_patch",
+      "timeout"
+    ],
     "properties": {
       "project_root": {
         "type": "string",

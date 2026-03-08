@@ -2,15 +2,24 @@
   "name": "arch_file_fanout",
   "description": "并发为每个 module 调用 arch_file_splitter，返回所有 file 定义",
   "long_running": false,
-  "module": "utils.arch_file_fanout",
+  "module": "arch.file_fanout",
   "function": "arch_file_fanout",
   "async": true,
   "parameters": {
     "type": "object",
-    "required": ["modules", "requirement"],
+    "required": [
+      "modules",
+      "requirement"
+    ],
     "properties": {
-      "modules":     { "type": "array",  "description": "Step1 输出的 module 列表" },
-      "requirement": { "type": "string", "description": "原始需求描述" }
+      "modules": {
+        "type": "array",
+        "description": "Step1 输出的 module 列表"
+      },
+      "requirement": {
+        "type": "string",
+        "description": "原始需求描述"
+      }
     }
   }
 }

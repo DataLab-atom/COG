@@ -15,7 +15,7 @@ from typing import Any
 
 from llm_config import LLMConfig, load_config_from_file, run as llm_run
 from utils._base import ToolResult
-from utils.arch_resolve_needs import arch_resolve_needs
+from arch.resolve_needs import arch_resolve_needs
 
 
 class ArchInternalFanoutResult(ToolResult):

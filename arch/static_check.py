@@ -16,7 +16,7 @@ from __future__ import annotations
 import copy
 from typing import Any
 from utils._base import ToolResult
-from utils.arch_validate_dag import arch_validate_dag
+from arch.validate_dag import arch_validate_dag
 
 
 class ArchStaticCheckResult(ToolResult):
