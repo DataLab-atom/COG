@@ -1,6 +1,14 @@
 """
 arch_assemble: 将函数体填入代码骨架并写入磁盘。
-骨架中用 {{body:<fn_id>}} 作为占位符，替换为对应的函数体代码。
+
+处理逻辑：
+- 遍历 skeletons（{file_path: skeleton_code}）
+- 查找骨架中所有 {{body:<fn_id>}} 占位符
+- 从 fn_bodies 取出对应 body，按 fn_stubs[fn_id]["indent"] 对每行加缩进
+- 替换占位符后创建目录（os.makedirs）并写入 .py 文件
+
+返回 ArchAssembleResult(ok, errors, written)
+  - written：成功写入的文件路径列表
 """
 from __future__ import annotations
 import os

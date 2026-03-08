@@ -1,8 +1,11 @@
 """
 arch_syntax_check: 对已写入磁盘的 Python 文件执行语法检查（py_compile）。
-- 逐文件编译，收集 SyntaxError
-- 返回 ArchSyntaxCheckResult(ok, errors)
-  errors 格式：["path/to/file.py:10: invalid syntax", ...]
+
+逐文件调用 py_compile.compile(doraise=True)，捕获 PyCompileError 并收集到 errors。
+用于 arch_assemble 写入后的最终验证，确保生成代码无语法错误。
+
+返回 ArchSyntaxCheckResult(ok, errors)
+  - errors 格式：["<filename>, line <N>: <message>", ...]
 """
 from __future__ import annotations
 import py_compile

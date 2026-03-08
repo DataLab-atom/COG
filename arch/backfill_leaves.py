@@ -1,16 +1,19 @@
 """
-arch_backfill_leaves: 将 map 步骤的逐文件叶子结果回填到文件，汇总为全量节点列表。
+arch_backfill_leaves: 将 arch_internal_fanout 的逐文件叶子结果回填到文件，汇总全量节点列表。
 
-对每个文件的 {types, functions} 结果：
-    - 设置 kind: "type" / "function"
-    - 回填 file["types"] = [type_id, ...], file["functions"] = [fn_id, ...]
-    - 汇总为扁平 types / functions 列表
-    - 累积 global_ids
+arch_internal_fanout 两阶段并发完成后产出每个文件的 {types, functions}（leaf_results）。
+本步骤将其合并：
+  - 为 types/functions 设置 kind: "type" / "function"
+  - 将 type_id / fn_id 列表写入对应 file["types"] / file["functions"]
+  - 检测 ID 冲突（同一 id 出现在多个文件结果中 → 记录错误）
+  - 汇总为扁平 types / functions 列表及累积 global_ids
+
+files 与 leaf_results 长度必须一致（顺序对齐），否则返回错误。
 
 输入:
-    files:        list[dict]  — 文件列表（来自 file_fanout.files）
-    leaf_results: list[dict]  — 每个文件对应的叶子结果（map 步骤原始结果，list[dict]）
-    global_ids:   list[str]   — 已有全局 id 列表（可选，默认 []）
+    files:        list[dict]       — 文件列表
+    leaf_results: list[dict]       — 每个文件对应的叶子结果（{types, functions}）
+    global_ids:   list[str] | None — 已有全局 id 列表（可选，默认 []）
 
 输出:
     ArchBackfillLeavesResult(ok, errors, files, types, functions, global_ids)

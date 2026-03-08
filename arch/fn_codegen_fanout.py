@@ -2,15 +2,19 @@
 arch_fn_codegen_fanout: 全量并发为所有函数生成函数体，基于调用图依赖排序。
 
 设计原则：
-- 全量并发：所有函数在同一 asyncio.gather 中启动
-- 调用图依赖：fn A calls fn B → A 等待 B 的 body 就绪（asyncio.Event），
-  确保 A 生成时能拿到 B 的实际实现作为上下文
-- 类方法依赖：类方法（非 init）等待同类 init_fn 的 body 就绪，
-  与 calls 依赖无关——即使方法不直接 call init_fn 也要等
-- 死锁安全：fn.calls 已由 validate_calls_dag 保证无环，Event 等待不会死锁
-- 失败容错：任一 fn 生成失败时 fallback 为 "pass"，并强制 set Event 解除下游等待
+- 全量并发：所有函数在同一 asyncio.gather 中启动，每个 fn 一个 asyncio.Event
+- Step 1（calls 依赖）：fn A calls fn B → A 等待 B 的 Event，
+  确保 A 生成时可将 B 的实际实现作为上下文（calls_bodies_json）
+- Step 2（类方法依赖）：类方法（非 init）等待同类 init_fn 的 Event，
+  即使方法不直接 call init_fn 也需等待（init_body 作为上下文）
+- 死锁防护：fn.calls 已由 arch_validate_dag 保证 DAG（Step 1 安全）；
+  Step 2 若 init_fn.calls 包含本 fn（init 主动调用了该方法），则跳过等待，
+  避免 init_fn 等本 fn（Step 1）与本 fn 等 init_fn（Step 2）形成互相死锁
+- 失败容错：任一 fn 生成失败时 fallback 为 "pass  # generation failed"，
+  finally 块强制 set Event，确保依赖该 fn 的 caller 不被阻塞
 
-返回 {"fn_bodies": {fn_id: body_code}, "errors": [...]}
+返回 ArchFnCodegenFanoutResult(ok, errors, fn_bodies)
+  - fn_bodies：{fn_id: body_code}（body 不含 def 行，由 arch_assemble 填入骨架）
 """
 from __future__ import annotations
 import asyncio

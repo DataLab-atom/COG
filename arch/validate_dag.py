@@ -1,6 +1,13 @@
 """
-arch_validate_dag: 对 module imports、file imports、fn calls 进行有向图环检测。
+arch_validate_dag: 对架构树中的有向图执行环检测（DFS 拓扑排序）。
+
+可检测的图类型（由 check_targets 参数选择）：
+- "module_imports"：模块间导入依赖图
+- "file_imports"：文件间导入依赖图
+- "fn_calls"：函数调用图（DAG 保证 fn_codegen_fanout 中 Event 等待不死锁）
+
 返回 ArchValidateDagResult(ok, errors)
+  - errors：包含成环节点列表的描述信息
 """
 from __future__ import annotations
 from typing import Any

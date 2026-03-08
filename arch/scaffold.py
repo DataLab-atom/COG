@@ -1,8 +1,16 @@
 """
 arch_scaffold: 根据架构树静态生成目录结构和代码骨架。
-- 为每个 module 创建目录
-- 为每个 file 生成 .py 骨架（imports + constants + 类定义 + 函数 stub）
-- 返回 ArchScaffoldResult(ok, skeletons, fn_stubs)
+
+处理内容：
+- module：为每个模块创建子目录及 __init__.py（含 exports 重新导出）
+  - module.root=True → __init__.py 放置于 output_dir/ 根目录，不创建子目录
+- file：为每个文件生成 .py 骨架（imports、constants、类定义、函数 stub）
+  - file.root=True → .py 文件放置于 output_dir/ 根目录，import 路径仅用文件名
+- 函数体用占位符 {{body:<fn_id>}} 标记，由下游 arch_assemble 填充
+
+返回 ArchScaffoldResult(ok, skeletons, fn_stubs)
+  - skeletons：{file_path: skeleton_code}
+  - fn_stubs：{fn_id: {file_id, class_id, method, indent, is_init?}}
 """
 from __future__ import annotations
 import os

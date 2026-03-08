@@ -1,14 +1,17 @@
 """
-arch_backfill_files: 将 map 步骤的逐模块文件列表回填到模块，汇总为全量文件列表。
+arch_backfill_files: 将 arch_file_splitter 的逐模块输出回填到模块节点，汇总全量文件列表。
 
-对每个模块的文件列表：
-    - 设置 kind: "file"
-    - 回填 module["files"] = [file_id, ...]
-    - 汇总为扁平 files 列表
+graph 中 arch_file_splitter 以 map 形式对每个模块并发调用，产出 file_lists（每模块一组文件）。
+本步骤将其合并：
+  - 为每个文件设置 kind: "file"
+  - 将 file id 列表写入对应 module["files"]
+  - 汇总为扁平 files 列表供下游步骤使用
+
+modules 与 file_lists 长度必须一致（顺序对齐），否则返回错误。
 
 输入:
-    modules:    list[dict]        — 模块列表（来自 module_split.result）
-    file_lists: list[list[dict]]  — 每个模块对应的文件列表（map 步骤原始结果）
+    modules:    list[dict]        — 模块列表（来自 arch_module_splitter）
+    file_lists: list[list[dict]]  — 每个模块对应的文件列表（arch_file_splitter map 结果）
 
 输出:
     ArchBackfillFilesResult(ok, errors, modules, files)
