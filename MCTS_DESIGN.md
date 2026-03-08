@@ -1,8 +1,81 @@
-# MCTS 代码优化引擎 — 设计文档
+# COG 系统全局设计文档
 
-## 一、整体思路
+## 零、系统总览
 
-用蒙特卡洛树搜索（MCTS）在代码版本空间中做 **Beam Search**。每个节点代表"从原始项目出发，依次应用若干 patch 之后"的一个代码版本。搜索目标是让 `main.py` 的 `__METRICS__` 输出最大化。
+COG 是一个**自动化代码优化流水线**，接收一个用户项目（含 `main.py`）和需求描述，输出性能更优的代码版本。
+
+```
+用户项目（main.py + 数据集）
+         │
+         ▼
+┌─────────────────────────────┐
+│  0. Dataset Report          │  分析数据集特征，生成报告
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│  1. Tree CoT                │  架构设计 → 生成初始项目代码
+│     arch_build graph        │  （模块划分 → 文件划分 → 函数定义 → 代码生成）
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│  2. Auto Optimizer（可选）  │  Optuna 超参数搜索（Fast/Balanced/Aggressive）
+│     auto_opt.py             │  LLM 将 main.py 改写为 optuna 脚本并运行
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│  3. MCR（标准优化循环）      │  Critic + Engineer 循环（无树结构）
+│     engine.py               │  counts=100 代，单前沿，串行每代
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│  4. MCTS（树搜索优化）       │  Beam Search + Human Gate（本文档重点）
+│     mcts_engine.py          │
+└─────────────────────────────┘
+```
+
+> MCR 和 MCTS 是同一优化目标的两种策略，可单独使用也可串联。
+
+---
+
+## 一、MCR 标准优化循环（engine.py）
+
+MCR 是 MCTS 的"前身"，也是默认优化策略。理解 MCR 有助于理解 MCTS 在哪些地方做了改进。
+
+### 每代流程
+
+```
+Critic LLM（带 tool use：read_file / 搜索）
+  输入：项目树, 历史记录, 上次运行日志, 需求
+  温度：基础 0.2，每代停滞 +0.2，最高 1.2（随停滞程度升温）
+  输出：proposals 列表（每个 proposal 含 1 个 target + K 个 direction）
+         ↓
+对每个 proposal 的每个 direction：
+  Engineer × N 并发变体（MonteCarloEngineerAgent）
+  → Optimizer.run()：沙盒跑所有变体，挑最优
+         ↓
+比较各 direction 的最优分数，选出本代最优方向
+  有改善 → apply_change() 写回磁盘，更新 baseline
+  无改善 → stagnation_streak += 1
+         ↓
+停滞 5 代 → history.perform_reset()（清除近期轨迹，重置视角）
+```
+
+### MCR vs MCTS 核心差异
+
+| | MCR | MCTS |
+|---|---|---|
+| 搜索结构 | 线性（每代一个状态）| 树（多代 Beam 并行） |
+| 展开策略 | Critic 自由选 target | (op×angle) 15 种固定组合 |
+| 多样性来源 | temperature 升温 | op/angle 组合保证维度覆盖 |
+| 人工介入 | 无 | Human Gate（每代） |
+| 回滚能力 | 无（直接写磁盘）| 有（patch 树，可回溯）|
+| 停滞处理 | history reset | rollback + architecture 升级 |
+
+---
+
+## 二、MCTS 树搜索引擎（mcts_engine.py）
+
+用蒙特卡洛树搜索在代码版本空间中做 **Beam Search**。每个节点代表"从原始项目出发，依次应用若干 patch 之后"的一个代码版本。搜索目标是让 `main.py` 的 `__METRICS__` 输出最大化。每个节点代表"从原始项目出发，依次应用若干 patch 之后"的一个代码版本。搜索目标是让 `main.py` 的 `__METRICS__` 输出最大化。
 
 ```
 root（原始代码，baseline score）
@@ -16,7 +89,7 @@ root（原始代码，baseline score）
 
 ---
 
-## 二、搜索空间
+## 三、MCTS 搜索空间
 
 ```
 OPERATORS (i=5):  compute | memory | io | algorithm | data_structure
@@ -31,7 +104,7 @@ ALL_COMBOS = i × j = 15 种 (op, angle) 组合
 
 ---
 
-## 三、节点结构（SearchNode）
+## 四、节点结构（SearchNode）
 
 ```python
 node.node_id          # 短 UUID，用于 Human Gate 选择
@@ -52,7 +125,7 @@ node.output_log       # main.py stdout
 
 ---
 
-## 四、两种展开模式（VariantGenerator）
+## 五、两种展开模式（VariantGenerator）
 
 ### 4a. LLM 模式（Gen 1 / Gen 2）
 
@@ -94,7 +167,7 @@ AST 静态检查 → 构建 SearchNode
 
 ---
 
-## 五、两段式执行（每代）
+## 六、两段式执行（每代）
 
 ```
 阶段 1 — 展开（generate_llm / generate_enumerate）
@@ -113,7 +186,7 @@ AST 静态检查 → 构建 SearchNode
 
 ---
 
-## 六、每代搜索节奏
+## 七、每代搜索节奏
 
 | 代 | 模式 | 说明 |
 |---|---|---|
@@ -124,7 +197,7 @@ AST 静态检查 → 构建 SearchNode
 
 ---
 
-## 七、Human Gate（每代结束后阻塞）
+## 八、Human Gate（每代结束后阻塞）
 
 引擎在每代结束后打印摘要，然后阻塞等待决策：
 
@@ -153,7 +226,7 @@ stop
 
 ---
 
-## 八、每代结束后的决策逻辑
+## 九、每代结束后的决策逻辑
 
 ```
 全部候选静态失败？
@@ -171,7 +244,7 @@ stop
 
 ---
 
-## 九、关键参数
+## 十、关键参数
 
 | 参数 | 默认值 | 含义 |
 |---|---|---|
@@ -185,7 +258,7 @@ stop
 
 ---
 
-## 十、数据流总结
+## 十一、MCTS 数据流总结
 
 ```
 项目代码（磁盘）
