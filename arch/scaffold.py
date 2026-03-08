@@ -19,10 +19,22 @@ class ArchScaffoldResult(ToolResult):
     fn_stubs: dict[str, dict]
 
 
-def _file_id_to_path(file_id: str, output_dir: str) -> str:
-    """file::training/trainer → output_dir/training/trainer.py"""
+def _file_id_to_path(file_id: str, output_dir: str, root: bool = False) -> str:
+    """file::training/trainer → output_dir/training/trainer.py
+    root=True → output_dir/trainer.py（根目录文件，忽略模块前缀）
+    """
     parts = file_id.replace("file::", "").split("/")
+    if root:
+        return os.path.join(output_dir, parts[-1] + ".py")
     return os.path.join(output_dir, *parts[:-1], parts[-1] + ".py")
+
+
+def _file_import_path(file_id: str, files: dict[str, dict]) -> str:
+    """将 file id 转换为 Python import 路径，root 文件只取文件名。"""
+    parts = file_id.replace("file::", "").split("/")
+    if files.get(file_id, {}).get("root"):
+        return parts[-1]
+    return ".".join(parts)
 
 
 def _module_id_to_dir(module_id: str, output_dir: str) -> str:
@@ -58,8 +70,7 @@ def _build_import_lines(imports: list[dict], files: dict[str, dict]) -> list[str
         names = imp.get("names", [])
         if not from_id or not names:
             continue
-        parts = from_id.replace("file::", "").split("/")
-        module_path = ".".join(parts)
+        module_path = _file_import_path(from_id, files)
         lines.append(f"from {module_path} import {', '.join(names)}")
     return lines
 
@@ -90,7 +101,7 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
     fn_stubs: dict[str, dict] = {}
 
     for fid, f in files.items():
-        file_path = _file_id_to_path(fid, output_dir)
+        file_path = _file_id_to_path(fid, output_dir, root=f.get("root", False))
         lines: list[str] = []
 
         # imports
@@ -212,11 +223,9 @@ def arch_scaffold(tree: list[dict], output_dir: str) -> ArchScaffoldResult:
         init_lines: list[str] = []
         for exp_id in exports:
             name = exp_id.split("::")[-1]
-            # 找到 exp_id 所在的 file
             src_fid = id_to_file.get(exp_id, "")
             if src_fid:
-                parts = src_fid.replace("file::", "").split("/")
-                module_path = ".".join(parts)
+                module_path = _file_import_path(src_fid, files)
                 init_lines.append(f"from {module_path} import {name}")
         skeletons[init_path] = "\n".join(init_lines)
 
