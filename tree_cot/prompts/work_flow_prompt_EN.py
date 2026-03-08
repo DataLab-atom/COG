@@ -247,7 +247,7 @@ Please assemble the previously implemented code so that the project can run corr
 - **Logging Rules**: You must print detailed process information to the console at each major step so the user can track the progress. (e.g., print data shapes after loading, print status before/after optimization, print intermediate metrics, etc.).
 - Set the relevant parameters to reasonable values; do not reduce them for the sake of a quick demonstration.
 - Write the code using the user's **full dataset**.
-- You MUST write the evaluation result(s) to a JSON file at the end. Get the output path via `import os; _metric_path = os.environ.get("METRIC_OUTPUT_PATH")`. Then write a dict mapping metric name(s) to float value(s), e.g. `import json; json.dump({{{task_metric}: value}}, open(_metric_path, "w"))`. The metrics to include are: **{task_metric}**. Do NOT use the old `print("METRIC_RESULT:...")` format.
+- You MUST print the evaluation result(s) to stdout at the end using this exact format: `print("__METRICS__:" + json.dumps({{{task_metric}: value}}))`. The metrics to include are: **{task_metric}**. This must be the last line printed. Do NOT use the old `print("METRIC_RESULT:...")` format.
 
 # The following is the complete project structure:
 {complete_structure}

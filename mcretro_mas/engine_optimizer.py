@@ -167,10 +167,6 @@ class AutoOptimizer:
                     )
                     return {"id": trial_id, "score": -999, "error": f"Injection failed: {msg}", "output": ""}
 
-            result_json_path = os.path.join(temp_dir, "metrics_output.json")
-            env = os.environ.copy()
-            env["METRIC_OUTPUT_PATH"] = result_json_path
-
             output = ""
             try:
                 result = subprocess.run(
@@ -179,7 +175,6 @@ class AutoOptimizer:
                     capture_output=True,
                     text=True,
                     timeout=self.timeout,
-                    env=env,
                 )
                 output = result.stdout
                 log_dialog("sandbox.stdout", result.stdout or "", trial_id=trial_id, sandbox_root=sandbox_root)
@@ -192,27 +187,29 @@ class AutoOptimizer:
                 log_event("sandbox_exception", trial_id=trial_id, sandbox_root=sandbox_root, error=str(e))
                 return {"id": trial_id, "score": -999, "error": str(e), "output": output}
 
-            if os.path.exists(result_json_path):
-                try:
-                    with open(result_json_path, "r", encoding="utf-8") as f:
-                        metrics = json.load(f)
-                    score = self.score_fn(metrics)
-                    log_event(
-                        "sandbox_run_scored",
-                        trial_id=trial_id,
-                        sandbox_root=sandbox_root,
-                        metrics=metrics,
-                        score=score,
-                    )
-                    return {
-                        "id": trial_id,
-                        "score": score,
-                        "metrics": metrics,
-                        "candidate": candidate,
-                        "output": output,
-                    }
-                except Exception as e:
-                    log_event("sandbox_metrics_parse_error", trial_id=trial_id, error=str(e))
+            _PREFIX = "__METRICS__:"
+            for line in reversed(output.splitlines()):
+                if line.startswith(_PREFIX):
+                    try:
+                        metrics = json.loads(line[len(_PREFIX):])
+                        score = self.score_fn(metrics)
+                        log_event(
+                            "sandbox_run_scored",
+                            trial_id=trial_id,
+                            sandbox_root=sandbox_root,
+                            metrics=metrics,
+                            score=score,
+                        )
+                        return {
+                            "id": trial_id,
+                            "score": score,
+                            "metrics": metrics,
+                            "candidate": candidate,
+                            "output": output,
+                        }
+                    except Exception as e:
+                        log_event("sandbox_metrics_parse_error", trial_id=trial_id, error=str(e))
+                    break
 
             err_tail = output[-300:] if output else result.stderr[-300:]
             log_event(
@@ -224,7 +221,7 @@ class AutoOptimizer:
             return {
                 "id": trial_id,
                 "score": -999,
-                "error": f"No metrics JSON found. Tail: {err_tail}",
+                "error": f"No __METRICS__ line found in stdout. Tail: {err_tail}",
                 "output": output + "\nSTDERR:\n" + result.stderr,
             }
 
