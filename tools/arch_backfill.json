@@ -1,0 +1,17 @@
+{
+  "name": "arch_backfill",
+  "description": "静态回填 file.imports.names、module.exports、module.dependencies 和 entrypoint",
+  "long_running": false,
+  "module": "utils.arch_backfill",
+  "function": "arch_backfill",
+  "parameters": {
+    "type": "object",
+    "required": ["tree"],
+    "properties": {
+      "tree": {
+        "type": "array",
+        "description": "完整的项目树（JSON 列表）"
+      }
+    }
+  }
+}

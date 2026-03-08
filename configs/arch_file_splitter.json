@@ -1,0 +1,36 @@
+{
+  "description": "将单个模块拆分为职责明确的文件列表",
+  "long_running": false,
+  "skills": ["skills/arch_builder.json"],
+  "agent_name": "arch_file_splitter",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/arch_file_split/system.txt",
+  "user_prompt_path": "./prompts/arch_file_split/user.txt",
+  "system_variables": [],
+  "user_variables": ["requirement", "module_json", "all_modules_json"],
+  "json_output": true,
+  "use_instructor": false,
+  "json_schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": ["id", "root", "description", "imports", "types", "functions", "constants"],
+      "properties": {
+        "id":          { "type": "string", "description": "file::<module>/<name>" },
+        "root":        { "type": "boolean" },
+        "description": { "type": "string" },
+        "imports":     { "type": "array" },
+        "types":       { "type": "array", "items": { "type": "string" } },
+        "functions":   { "type": "array", "items": { "type": "string" } },
+        "constants":   { "type": "array" }
+      }
+    }
+  },
+  "enable_history": false,
+  "timeout": 60.0,
+  "max_retries": 3,
+  "params": {
+    "max_tokens": 2048,
+    "temperature": 0.2
+  }
+}

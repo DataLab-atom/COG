@@ -1,0 +1,10 @@
+## 需求描述
+{{requirement}}
+
+## 当前文件
+{{file_json}}
+
+## 全局已定义 id 列表
+{{global_ids_json}}
+
+请定义该文件中所有叶子节点（无依赖的 type 和 fn），输出 JSON 对象。
