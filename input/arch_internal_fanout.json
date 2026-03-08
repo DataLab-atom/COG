@@ -1,6 +1,6 @@
 {
   "name": "arch_internal_fanout",
-  "description": "并发为每个 file 迭代调用 arch_internal_definer，处理 needs 递归，返回所有内部节点定义",
+  "description": "两阶段全量并发：Phase1 并发定义所有 type::，Phase2 并发定义所有 fn::（类成员函数等待 init_fn 完成），返回所有内部节点定义",
   "long_running": false,
   "module": "arch.internal_fanout",
   "function": "arch_internal_fanout",

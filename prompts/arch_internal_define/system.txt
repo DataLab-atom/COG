@@ -27,7 +27,8 @@
   "params": [{"name": "<name>", "type": "<type>"}],
   "returns": {"type": "<type>"}
 }
-needs 最多递归 3 层（当前层 depth 由系统注入，depth=3 时 needs 必须为空）。
+needs.depth 表示该依赖的递归层数（1–3），由你自行评估填写；深度越高越接近叶子。
+实际 needs 解析由下游 arch_resolve_needs 统一处理，depth=3 的 needs 不会被进一步展开。
 
 ## 输出规则
 - calls 只能引用已存在于全局已定义 id 列表中的 fn:: id

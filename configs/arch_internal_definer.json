@@ -1,5 +1,5 @@
 {
-  "description": "为单个文件定义内部节点（有依赖的 type 和 fn），支持多轮迭代历史",
+  "description": "为单个 type:: 或 fn:: 定义内部节点（由 arch_internal_fanout 全量并发调用）",
   "long_running": false,
   "skills": ["skills/arch_builder.json"],
   "agent_name": "arch_internal_definer",
