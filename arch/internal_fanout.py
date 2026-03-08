@@ -112,6 +112,7 @@ async def arch_internal_fanout(
     files: list[dict],
     requirement: str,
     global_ids: list[str],
+    modules: list[dict] | None = None,
 ) -> ArchInternalFanoutResult:
     config = load_config_from_file("configs/arch_internal_definer.json")
     files = copy.deepcopy(files)
@@ -141,7 +142,8 @@ async def arch_internal_fanout(
                 updated_ids.append(nid)
 
     tree = (
-        [{"kind": "file", **f} for f in updated_files]
+        [{"kind": "module", **m} for m in (modules or [])]
+        + [{"kind": "file", **f} for f in updated_files]
         + [{"kind": "type", **t} for t in all_types]
         + [{"kind": "function", **fn} for fn in all_functions]
     )

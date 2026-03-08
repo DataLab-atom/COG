@@ -41,7 +41,8 @@
       "inputs": {
         "files":       "leaf_define.files",
         "requirement": "$.requirement",
-        "global_ids":  "leaf_define.global_ids"
+        "global_ids":  "leaf_define.global_ids",
+        "modules":     "file_split.modules"
       }
     }
   ],

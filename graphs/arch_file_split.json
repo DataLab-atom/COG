@@ -42,6 +42,7 @@
     }
   ],
   "outputs": {
-    "files": "file_fanout.files"
+    "files":   "file_fanout.files",
+    "modules": "file_fanout.modules"
   }
 }

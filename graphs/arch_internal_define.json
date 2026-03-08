@@ -1,9 +1,9 @@
 {
   "name": "arch_internal_define",
-  "description": "内部定义阶段：多轮迭代定义有依赖的 type/fn，解析 needs，回填，验证调用 DAG，静态检查",
+  "description": "内部定义阶段：多轮迭代定义有依赖的 type/fn，回填，验证调用 DAG，静态检查",
   "long_running": false,
   "skills": ["skills/arch_internal_define.json"],
-  "variables": ["files", "requirement", "global_ids"],
+  "variables": ["files", "requirement", "global_ids", "modules"],
   "steps": [
     {
       "id": "internal_fanout",
@@ -12,16 +12,8 @@
       "inputs": {
         "files":       "$.files",
         "requirement": "$.requirement",
-        "global_ids":  "$.global_ids"
-      }
-    },
-    {
-      "id": "resolve_needs",
-      "type": "tool",
-      "ref": "arch_resolve_needs",
-      "depends_on": ["internal_fanout"],
-      "inputs": {
-        "tree": "internal_fanout.tree"
+        "global_ids":  "$.global_ids",
+        "modules":     "$.modules"
       }
     },
     {
@@ -47,7 +39,7 @@
       "id": "static_check",
       "type": "tool",
       "ref": "arch_static_check",
-      "depends_on": ["resolve_needs", "backfill", "validate_calls_dag"],
+      "depends_on": ["backfill", "validate_calls_dag"],
       "inputs": {
         "tree": "backfill.tree"
       }
