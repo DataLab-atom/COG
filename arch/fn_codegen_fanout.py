@@ -112,7 +112,7 @@ async def _codegen_one(
         "fn_id":               fn_id,
         "description":         fn.get("description", ""),
         "is_async":            str(fn.get("is_async", False)),
-        "is_init":             str(fn.get("is_init", False)),
+        "is_init":             str(stub.get("is_init", False)),
         "params_json":         json.dumps(fn.get("params", []),   ensure_ascii=False),
         "returns_json":        json.dumps(fn.get("returns", {}),  ensure_ascii=False),
         "calls_context_json":  json.dumps(calls_ctx,              ensure_ascii=False),
