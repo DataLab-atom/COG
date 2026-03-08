@@ -46,11 +46,15 @@ class PlanEvolutionModule:
 
         self.rubric_type = getattr(cfg.problems, "rubric_type", "general_ml_project")
 
-        # 3. 归档路径
+        # 3. 归档路径（默认关闭磁盘归档，可通过配置开启）
         task_name = cfg.problems.task_name
         self.demand_text = cfg.problems.demand
-        self.archive_dir = self.project_root / "problems" / task_name / "decision_evolution_records"
-        self.archive_dir.mkdir(parents=True, exist_ok=True)
+        self.enable_archive = bool(getattr(getattr(cfg, "parameters", None), "enable_plan_archive", False))
+        if self.enable_archive:
+            self.archive_dir = self.project_root / "problems" / task_name / "decision_evolution_records"
+            self.archive_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            self.archive_dir = None
 
         ##dataset_report
         self.dataset_report = self.project_root / "problems"  / task_name/ "reports" / "data_analysis_report.md"
@@ -295,7 +299,8 @@ class PlanEvolutionModule:
         return f"Implementation document:\n{implementation_doc}\n\n{guidance}\n\nContext bundle:\n{ctx_blob}"
 
     def _archive_candidate(self, text: str, iter_idx: int, cand_idx: int, score: float, tag: str):
-        if not self.archive_dir: return
+        if not self.enable_archive or not self.archive_dir:
+            return
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         filename = f"iter{iter_idx:02d}_cand{cand_idx:02d}_score{score:.2f}_{tag}_{timestamp}.md"
         (self.archive_dir / filename).write_text(text.strip() + "\n", encoding="utf-8")

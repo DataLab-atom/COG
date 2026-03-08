@@ -108,41 +108,23 @@ class Pipeline:
         # ------------------------------------------------------------------
         # 1) dataset_report
         # ------------------------------------------------------------------
-        analysis_path = self.reporter.outputs_dir / "data_analysis_report.md"
-        analysis_report = ""
-        if analysis_path.exists():
-            analysis_report = _read_text(analysis_path).strip()
-        if analysis_report:
-            self.logger.info("[1/4] dataset_reporter skipped (using existing report) | report_path=%s", str(analysis_path))
-        else:
-            t0 = time.perf_counter()
-            self.logger.info("[1/4] dataset_reporter start ...")
-            try:
-                analysis_report = self.reporter.run(verbose=True) or ""
-            except Exception:
-                self.logger.exception("[1/4] dataset_reporter failed")
-                raise
-            self.logger.info(
-                "[1/4] dataset_reporter done | sec=%.2f | report_path=%s | report_len=%s",
-                time.perf_counter() - t0,
-                str(analysis_path),
-                len(analysis_report or ""),
-            )
-            if not analysis_report and analysis_path.exists():
-                analysis_report = _read_text(analysis_path).strip()
+        t0 = time.perf_counter()
+        self.logger.info("[1/4] dataset_reporter start ...")
+        try:
+            analysis_report = self.reporter.run(verbose=True) or ""
+        except Exception:
+            self.logger.exception("[1/4] dataset_reporter failed")
+            raise
+        self.logger.info(
+            "[1/4] dataset_reporter done | sec=%.2f | report_len=%s",
+            time.perf_counter() - t0,
+            len(analysis_report),
+        )
 
         # ------------------------------------------------------------------
         # 2) decision(plan evolution) + 3) treecot + verify loop
         # ------------------------------------------------------------------
-        plan_path = self.reporter.outputs_dir / "implementation_plan.md"
         current_plan: Optional[str] = None
-        plan_loaded = False
-        if plan_path.exists():
-            loaded_plan = _read_text(plan_path).strip()
-            if loaded_plan:
-                current_plan = loaded_plan
-                plan_loaded = True
-                self.logger.info("[2/4] plan_evolution skipped (using existing plan) | plan_path=%s", str(plan_path))
         last_failure: str = ""
         last_output_dir: Optional[Path] = None
         last_verify: Optional[dict] = None
@@ -158,16 +140,12 @@ class Pipeline:
                     extra_context=extra_context,
                     initial_plan=None,
                 )
-                if current_plan:
-                    plan_path.write_text(str(current_plan).strip() + "\n", encoding="utf-8")
                 self.logger.info(
                     "[2/4] plan_evolution generate done | sec=%.2f | plan_len=%s | plan_preview=%s",
                     time.perf_counter() - t_plan,
                     len(current_plan or ""),
                     _clip(current_plan, 300),
                 )
-            elif plan_loaded and attempt == 1:
-                self.logger.info("[2/4] plan_evolution skipped (using existing plan)")
             else:
                 self.logger.warning("[2/4] plan_evolution refine start | last_failure=%s", _clip(last_failure, 400))
                 t_refine = time.perf_counter()
@@ -177,8 +155,6 @@ class Pipeline:
                     extra_context=extra_context,
                 )
                 current_plan = self.plan_evolver.refine_plan(current_plan=current_plan, feedback=last_failure, ctx=ctx)
-                if current_plan:
-                    plan_path.write_text(str(current_plan).strip() + "\n", encoding="utf-8")
                 self.logger.info(
                     "[2/4] plan_evolution refine done | sec=%.2f | plan_len=%s | plan_preview=%s",
                     time.perf_counter() - t_refine,
