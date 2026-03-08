@@ -13,17 +13,40 @@
   "json_schema": {
     "type": "object",
     "required": ["types", "functions"],
+    "additionalProperties": false,
     "properties": {
       "types": {
         "type": "array",
         "items": {
           "type": "object",
           "required": ["id", "base_class", "fields", "overloads"],
+          "additionalProperties": false,
           "properties": {
-            "id":         { "type": "string" },
-            "base_class": { "type": ["string", "null"] },
-            "fields":     { "type": "array" },
-            "overloads":  { "type": "array" }
+            "id": {
+              "type": "string",
+              "pattern": "^type::.+"
+            },
+            "base_class": {
+              "type": ["string", "null"],
+              "description": "父类名，纯数据类型填 null"
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "type"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "overloads": {
+              "type": "array",
+              "maxItems": 0,
+              "description": "叶子 type 不允许有 overloads"
+            }
           }
         }
       },
@@ -32,15 +55,62 @@
         "items": {
           "type": "object",
           "required": ["id", "description", "is_async", "params", "returns", "calls", "needs", "reference"],
+          "additionalProperties": false,
           "properties": {
-            "id":          { "type": "string" },
-            "description": { "type": "string" },
-            "is_async":    { "type": "boolean" },
-            "params":      { "type": "array" },
-            "returns":     { "type": "object" },
-            "calls":       { "type": "array" },
-            "needs":       { "type": "array" },
-            "reference":   { "type": ["object", "null"] }
+            "id": {
+              "type": "string",
+              "pattern": "^fn::.+"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "is_async": { "type": "boolean" },
+            "params": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "type"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "returns": {
+              "type": "object",
+              "required": ["type"],
+              "additionalProperties": false,
+              "properties": {
+                "type": { "type": "string", "minLength": 1 }
+              }
+            },
+            "calls": {
+              "type": "array",
+              "maxItems": 0,
+              "description": "叶子 fn 不允许有 calls"
+            },
+            "needs": {
+              "type": "array",
+              "maxItems": 0,
+              "description": "叶子 fn 不允许有 needs"
+            },
+            "reference": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "required": ["source", "target", "note"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": { "type": "string", "minLength": 1 },
+                    "target": { "type": "string", "minLength": 1 },
+                    "note":   { "type": "string" }
+                  }
+                }
+              ]
+            }
           }
         }
       }

@@ -13,17 +13,53 @@
   "json_schema": {
     "type": "object",
     "required": ["types", "functions"],
+    "additionalProperties": false,
     "properties": {
       "types": {
         "type": "array",
         "items": {
           "type": "object",
           "required": ["id", "base_class", "fields", "overloads"],
+          "additionalProperties": false,
           "properties": {
-            "id":         { "type": "string" },
-            "base_class": { "type": ["string", "null"] },
-            "fields":     { "type": "array" },
-            "overloads":  { "type": "array" }
+            "id": {
+              "type": "string",
+              "pattern": "^type::.+"
+            },
+            "base_class": {
+              "type": ["string", "null"]
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "type"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "overloads": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["method", "fn", "args"],
+                "additionalProperties": false,
+                "properties": {
+                  "method": { "type": "string", "minLength": 1 },
+                  "fn": {
+                    "type": "string",
+                    "pattern": "^fn::.+"
+                  },
+                  "args": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -32,15 +68,99 @@
         "items": {
           "type": "object",
           "required": ["id", "description", "is_async", "params", "returns", "calls", "needs", "reference"],
+          "additionalProperties": false,
           "properties": {
-            "id":          { "type": "string" },
-            "description": { "type": "string" },
-            "is_async":    { "type": "boolean" },
-            "params":      { "type": "array" },
-            "returns":     { "type": "object" },
-            "calls":       { "type": "array" },
-            "needs":       { "type": "array" },
-            "reference":   { "type": ["object", "null"] }
+            "id": {
+              "type": "string",
+              "pattern": "^fn::.+"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "is_async": { "type": "boolean" },
+            "params": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "type"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "returns": {
+              "type": "object",
+              "required": ["type"],
+              "additionalProperties": false,
+              "properties": {
+                "type": { "type": "string", "minLength": 1 }
+              }
+            },
+            "calls": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^fn::.+"
+              }
+            },
+            "needs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["location", "description", "params", "returns", "depth"],
+                "additionalProperties": false,
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "pattern": "^file::.+"
+                  },
+                  "description": { "type": "string", "minLength": 1 },
+                  "params": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["name", "type"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": { "type": "string", "minLength": 1 },
+                        "type": { "type": "string", "minLength": 1 }
+                      }
+                    }
+                  },
+                  "returns": {
+                    "type": "object",
+                    "required": ["type"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": { "type": "string", "minLength": 1 }
+                    }
+                  },
+                  "depth": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  }
+                }
+              }
+            },
+            "reference": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "required": ["source", "target", "note"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": { "type": "string", "minLength": 1 },
+                    "target": { "type": "string", "minLength": 1 },
+                    "note":   { "type": "string" }
+                  }
+                }
+              ]
+            }
           }
         }
       }

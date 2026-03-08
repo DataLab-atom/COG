@@ -15,13 +15,40 @@
     "items": {
       "type": "object",
       "required": ["id", "root", "description", "imports", "exports", "files"],
+      "additionalProperties": false,
       "properties": {
-        "id":          { "type": "string", "description": "mod::<name>" },
-        "root":        { "type": "boolean" },
-        "description": { "type": "string" },
-        "imports":     { "type": "array", "items": { "type": "string" } },
-        "exports":     { "type": "array", "items": { "type": "string" } },
-        "files":       { "type": "array", "items": { "type": "string" } }
+        "id": {
+          "type": "string",
+          "pattern": "^mod::.+",
+          "description": "模块唯一标识，格式 mod::<name>"
+        },
+        "root": {
+          "type": "boolean",
+          "description": "是否为根模块（项目根目录）"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "模块职责边界描述"
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^mod::.+"
+          },
+          "description": "直接依赖的其它模块 id 列表"
+        },
+        "exports": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "对外暴露的 id 列表，本阶段留空"
+        },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "包含的 file id 列表，本阶段留空"
+        }
       }
     }
   },
