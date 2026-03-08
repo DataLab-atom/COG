@@ -166,48 +166,13 @@ class VerifyModule:
             )
 
     def _get_run_log(self, output_dir: Path, entry_file: Path, timeout_sec: int) -> _RunLog:
-        verify_dir = output_dir / ".verify"
-        verify_dir.mkdir(parents=True, exist_ok=True)
-        
-        first_success = verify_dir / "first_success_run.json"
-        latest = verify_dir / "latest_run.json"
-
-        def _read_log(p: Path) -> Optional[_RunLog]:
-            if not p.exists(): return None
-            try:
-                self.logger.debug(f"Reading cached log: {p}")
-                d = json.loads(p.read_text(encoding="utf-8"))
-                return _RunLog(**d)
-            except Exception as e:
-                self.logger.warning(f"Failed to read cached log {p}: {e}")
-                return None
-
-        log = _read_log(first_success)
-        if log:
-            self.logger.info("Found first_success_run.json, skipping re-run")
-            return log
-        
-        log = _read_log(latest)
-        if log:
-            self.logger.info("Found latest_run.json, skipping re-run")
-            return log
-
-        self.logger.info("No cached logs found. Starting execution...")
+        """直接执行入口文件，结果保留在内存中，不写磁盘缓存。"""
+        self.logger.info("Starting execution...")
         log = self._run_entrypoint(output_dir, entry_file, timeout_sec=timeout_sec)
-        
-        log_dict = {
-            "returncode": log.returncode, "duration_sec": log.duration_sec,
-            "stdout": log.stdout, "stderr": log.stderr
-        }
-        dump_str = json.dumps(log_dict, ensure_ascii=False, indent=2)
-        latest.write_text(dump_str, encoding="utf-8")
-        
         if log.returncode == 0:
-            first_success.write_text(dump_str, encoding="utf-8")
-            self.logger.info("Execution successful, saved to first_success_run.json")
+            self.logger.info("Execution successful.")
         else:
-            self.logger.warning(f"Execution failed (code={log.returncode}), saved to latest_run.json")
-        
+            self.logger.warning(f"Execution failed (code={log.returncode})")
         return log
 
     def _llm_score_pure(self, llm: OpenAILLM, dim_name: str, system: str, user: str) -> Dict[str, Any]:

@@ -1,0 +1,176 @@
+{
+  "description": "为单个文件定义内部节点（有依赖的 type 和 fn），支持多轮迭代历史",
+  "long_running": false,
+  "skills": ["skills/arch_builder.json"],
+  "agent_name": "arch_internal_definer",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/arch_internal_define/system.txt",
+  "user_prompt_path": "./prompts/arch_internal_define/user.txt",
+  "system_variables": [],
+  "user_variables": ["requirement", "file_json", "global_ids_json", "depth", "history_defined_json"],
+  "json_output": true,
+  "use_instructor": false,
+  "json_schema": {
+    "type": "object",
+    "required": ["types", "functions"],
+    "additionalProperties": false,
+    "properties": {
+      "types": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["id", "base_class", "fields", "overloads"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^type::.+"
+            },
+            "base_class": {
+              "type": ["string", "null"]
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "type"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "overloads": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["method", "fn", "args"],
+                "additionalProperties": false,
+                "properties": {
+                  "method": { "type": "string", "minLength": 1 },
+                  "fn": {
+                    "type": "string",
+                    "pattern": "^fn::.+"
+                  },
+                  "args": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "functions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["id", "description", "is_async", "params", "returns", "calls", "needs", "reference"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^fn::.+"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "is_async": { "type": "boolean" },
+            "params": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "type"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "returns": {
+              "type": "object",
+              "required": ["type"],
+              "additionalProperties": false,
+              "properties": {
+                "type": { "type": "string", "minLength": 1 }
+              }
+            },
+            "calls": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^fn::.+"
+              }
+            },
+            "needs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["location", "description", "params", "returns", "depth"],
+                "additionalProperties": false,
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "pattern": "^file::.+"
+                  },
+                  "description": { "type": "string", "minLength": 1 },
+                  "params": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["name", "type"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": { "type": "string", "minLength": 1 },
+                        "type": { "type": "string", "minLength": 1 }
+                      }
+                    }
+                  },
+                  "returns": {
+                    "type": "object",
+                    "required": ["type"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": { "type": "string", "minLength": 1 }
+                    }
+                  },
+                  "depth": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  }
+                }
+              }
+            },
+            "reference": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "required": ["source", "target", "note"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": { "type": "string", "minLength": 1 },
+                    "target": { "type": "string", "minLength": 1 },
+                    "note":   { "type": "string" }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "enable_history": true,
+  "timeout": 90.0,
+  "max_retries": 3,
+  "params": {
+    "max_tokens": 4096,
+    "temperature": 0.3
+  }
+}

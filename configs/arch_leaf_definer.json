@@ -1,0 +1,126 @@
+{
+  "description": "为单个文件定义所有叶子节点（无内部依赖的 type 和 fn）",
+  "long_running": false,
+  "skills": ["skills/arch_builder.json"],
+  "agent_name": "arch_leaf_definer",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/arch_leaf_define/system.txt",
+  "user_prompt_path": "./prompts/arch_leaf_define/user.txt",
+  "system_variables": [],
+  "user_variables": ["requirement", "file_json", "global_ids_json"],
+  "json_output": true,
+  "use_instructor": false,
+  "json_schema": {
+    "type": "object",
+    "required": ["types", "functions"],
+    "additionalProperties": false,
+    "properties": {
+      "types": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["id", "base_class", "fields", "overloads"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^type::.+"
+            },
+            "base_class": {
+              "type": ["string", "null"],
+              "description": "父类名，纯数据类型填 null"
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "type"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "overloads": {
+              "type": "array",
+              "maxItems": 0,
+              "description": "叶子 type 不允许有 overloads"
+            }
+          }
+        }
+      },
+      "functions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["id", "description", "is_async", "params", "returns", "calls", "needs", "reference"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^fn::.+"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "is_async": { "type": "boolean" },
+            "params": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "type"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "returns": {
+              "type": "object",
+              "required": ["type"],
+              "additionalProperties": false,
+              "properties": {
+                "type": { "type": "string", "minLength": 1 }
+              }
+            },
+            "calls": {
+              "type": "array",
+              "maxItems": 0,
+              "description": "叶子 fn 不允许有 calls"
+            },
+            "needs": {
+              "type": "array",
+              "maxItems": 0,
+              "description": "叶子 fn 不允许有 needs"
+            },
+            "reference": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "required": ["source", "target", "note"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": { "type": "string", "minLength": 1 },
+                    "target": { "type": "string", "minLength": 1 },
+                    "note":   { "type": "string" }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "enable_history": false,
+  "timeout": 90.0,
+  "max_retries": 3,
+  "params": {
+    "max_tokens": 4096,
+    "temperature": 0.2
+  }
+}

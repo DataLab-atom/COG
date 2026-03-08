@@ -2,8 +2,12 @@
 # 问题基本元数据
 # ==========================================
 task_name: "longtail"
-task_type: "maximize"  # 对应 TASK_TYPE
-metric: "acc"        # 对应 TASK_METRIC
+metric: |
+  Use Per-Class Accuracy (macro-averaged accuracy) as the primary metric.
+  Compute accuracy separately for each class, then average across all classes with equal weight.
+  The function should return {"acc": float} where the value is between 0.0 and 1.0.
+  Higher values are better; a perfect classifier yields 1.0.
+  This metric is critical for long-tail datasets to avoid majority-class bias.
 rubric_type: "molecular_prediction"
 # ==========================================
 # 路径配置 (相对于项目根目录)

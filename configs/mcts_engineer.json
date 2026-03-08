@@ -1,0 +1,35 @@
+{
+  "description": "MCTS Engineer：根据 Critic 提出的优化方向，生成一份替换代码",
+  "long_running": false,
+  "skills": ["skills/mcts_engineer.json"],
+  "agent_name": "mcts_engineer",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/mcts_engineer/system.txt",
+  "user_prompt_path": "./prompts/mcts_engineer/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "target_file", "target_type", "target_name",
+    "direction", "reasoning", "original_code"
+  ],
+  "json_output": true,
+  "use_instructor": false,
+  "json_schema": {
+    "type": "object",
+    "required": ["code"],
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "type": "string",
+        "minLength": 1,
+        "description": "完整的替换代码，以 ```python ... ``` 包裹"
+      }
+    }
+  },
+  "enable_history": false,
+  "timeout": 90.0,
+  "max_retries": 2,
+  "params": {
+    "max_tokens": 4096,
+    "temperature": 0.8
+  }
+}

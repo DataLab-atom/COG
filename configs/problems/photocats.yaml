@@ -2,8 +2,11 @@
 # 问题基本元数据
 # ==========================================
 task_name: "photocats"
-task_type: "minimize"  # 对应 TASK_TYPE
-metric: "nmse"        # 对应 TASK_METRIC
+metric: |
+  Use Normalized Mean Squared Error (NMSE) as the primary metric.
+  NMSE = mean((y_pred - y_true)^2) / mean((y_true - mean(y_true))^2).
+  The function should return {"nmse": float}.
+  Lower values are better; a perfect prediction yields 0.
 rubric_type: "universal_problem_solving"
 # ==========================================
 # 路径配置 (相对于项目根目录)

@@ -1,0 +1,106 @@
+{
+  "name": "arch_build",
+  "description": "完整架构构建流程：模块划分 → 文件划分 → 叶子定义 → 内部定义 → 静态后处理 → 全量检查",
+  "long_running": false,
+  "skills": ["skills/arch_builder.json"],
+  "variables": ["requirement"],
+  "steps": [
+    {
+      "id": "module_split",
+      "type": "agent",
+      "ref": "configs/arch_module_splitter.json",
+      "inputs": {
+        "requirement": "$.requirement"
+      }
+    },
+    {
+      "id": "validate_module_dag",
+      "type": "tool",
+      "ref": "arch_validate_dag",
+      "depends_on": ["module_split"],
+      "inputs": {
+        "tree":           "module_split.result",
+        "check_targets":  ["module_imports"]
+      }
+    },
+    {
+      "id": "file_fanout",
+      "type": "tool",
+      "ref": "arch_file_fanout",
+      "depends_on": ["validate_module_dag"],
+      "inputs": {
+        "modules":     "module_split.result",
+        "requirement": "$.requirement"
+      }
+    },
+    {
+      "id": "validate_file_dag",
+      "type": "tool",
+      "ref": "arch_validate_dag",
+      "depends_on": ["file_fanout"],
+      "inputs": {
+        "tree":          "file_fanout.files",
+        "check_targets": ["file_imports"]
+      }
+    },
+    {
+      "id": "leaf_fanout",
+      "type": "tool",
+      "ref": "arch_leaf_fanout",
+      "depends_on": ["validate_file_dag"],
+      "inputs": {
+        "files":       "file_fanout.files",
+        "requirement": "$.requirement",
+        "global_ids":  []
+      }
+    },
+    {
+      "id": "internal_fanout",
+      "type": "tool",
+      "ref": "arch_internal_fanout",
+      "depends_on": ["leaf_fanout"],
+      "inputs": {
+        "files":       "leaf_fanout.files",
+        "requirement": "$.requirement",
+        "global_ids":  "leaf_fanout.global_ids"
+      }
+    },
+    {
+      "id": "resolve_needs",
+      "type": "tool",
+      "ref": "arch_resolve_needs",
+      "depends_on": ["internal_fanout"],
+      "inputs": {
+        "tree": "internal_fanout.tree"
+      }
+    },
+    {
+      "id": "backfill",
+      "type": "tool",
+      "ref": "arch_backfill",
+      "depends_on": ["internal_fanout"],
+      "inputs": {
+        "tree": "internal_fanout.tree"
+      }
+    },
+    {
+      "id": "validate_calls_dag",
+      "type": "tool",
+      "ref": "arch_validate_dag",
+      "depends_on": ["internal_fanout"],
+      "inputs": {
+        "tree":          "internal_fanout.tree",
+        "check_targets": ["fn_calls"]
+      }
+    },
+    {
+      "id": "static_check",
+      "type": "tool",
+      "ref": "arch_static_check",
+      "depends_on": ["resolve_needs", "backfill", "validate_calls_dag"],
+      "inputs": {
+        "tree": "backfill.tree"
+      }
+    }
+  ]
+}

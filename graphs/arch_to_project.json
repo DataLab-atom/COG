@@ -1,0 +1,40 @@
+{
+  "name": "arch_to_project",
+  "description": "将架构树转换为真实 Python 项目：骨架生成 → 并发函数体生成 → 组装写入磁盘",
+  "long_running": false,
+  "skills": ["skills/arch_to_project.json"],
+  "variables": ["tree", "output_dir"],
+  "steps": [
+    {
+      "id": "scaffold",
+      "type": "tool",
+      "ref": "arch_scaffold",
+      "inputs": {
+        "tree":       "$.tree",
+        "output_dir": "$.output_dir"
+      }
+    },
+    {
+      "id": "fn_codegen",
+      "type": "tool",
+      "ref": "arch_fn_codegen_fanout",
+      "depends_on": ["scaffold"],
+      "inputs": {
+        "tree":     "$.tree",
+        "fn_stubs": "scaffold.fn_stubs"
+      }
+    },
+    {
+      "id": "assemble",
+      "type": "tool",
+      "ref": "arch_assemble",
+      "depends_on": ["scaffold", "fn_codegen"],
+      "inputs": {
+        "skeletons":  "scaffold.skeletons",
+        "fn_bodies":  "fn_codegen.fn_bodies",
+        "fn_stubs":   "scaffold.fn_stubs",
+        "output_dir": "$.output_dir"
+      }
+    }
+  ]
+}

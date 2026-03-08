@@ -1,0 +1,17 @@
+## 需求描述
+{{requirement}}
+
+## 当前文件
+{{file_json}}
+
+## 全局已定义 id 列表
+{{global_ids_json}}
+
+## 当前 needs 递归深度
+{{depth}}
+
+## 本轮已定义（历史）
+{{history_defined_json}}
+
+请定义该文件中剩余的内部节点（有依赖的 type 和 fn），输出 JSON 对象。
+如果该文件所有节点已定义完毕，输出 {"types": [], "functions": []}。

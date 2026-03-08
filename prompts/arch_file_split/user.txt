@@ -1,0 +1,10 @@
+## 需求描述
+{{requirement}}
+
+## 当前模块
+{{module_json}}
+
+## 所有模块列表（用于跨模块 imports 参考）
+{{all_modules_json}}
+
+请为该模块划分文件，输出 JSON 数组。

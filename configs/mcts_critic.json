@@ -1,0 +1,48 @@
+{
+  "description": "MCTS Critic：针对指定 (operator, angle) 组合，分析项目代码并提出一个具体的优化目标",
+  "long_running": false,
+  "skills": ["skills/mcts_critic.json"],
+  "agent_name": "mcts_critic",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/mcts_critic/system.txt",
+  "user_prompt_path": "./prompts/mcts_critic/user.txt",
+  "system_variables": ["op", "angle"],
+  "user_variables": ["demand", "tree_text", "history_prompt", "baseline_log"],
+  "json_output": true,
+  "use_instructor": false,
+  "json_schema": {
+    "type": "object",
+    "required": ["target_file", "target_type", "target_name", "direction", "reasoning"],
+    "additionalProperties": false,
+    "properties": {
+      "target_file": {
+        "type": "string",
+        "description": "相对路径，例如 src/model.py"
+      },
+      "target_type": {
+        "type": "string",
+        "enum": ["function", "class"],
+        "description": "优化目标的类型"
+      },
+      "target_name": {
+        "type": "string",
+        "description": "要优化的函数名或类名"
+      },
+      "direction": {
+        "type": "string",
+        "description": "一句话优化方向描述"
+      },
+      "reasoning": {
+        "type": "string",
+        "description": "为何该方向能提升指标的理由"
+      }
+    }
+  },
+  "enable_history": false,
+  "timeout": 60.0,
+  "max_retries": 2,
+  "params": {
+    "max_tokens": 1024,
+    "temperature": 0.6
+  }
+}

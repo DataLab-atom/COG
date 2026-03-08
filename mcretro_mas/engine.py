@@ -33,6 +33,7 @@ from mcretro_mas.engine_agents import (
 from mcretro_mas.engine_history import EvolutionRecord, HistoryManager, OptimizationProposal, OptimizationStatus
 from mcretro_mas.engine_logging import log_dialog, log_event
 from mcretro_mas.engine_optimizer import AutoOptimizer
+from mcretro_mas.metric_agent import infer_task_type
 
 def find_original_code(results, target_name, target_type):
     for result in results:
@@ -91,7 +92,7 @@ def main(cfg: DictConfig, project_root: str) -> None:
 
     # [修改] 从 cfg 获取参数 TASK_METRIC, TASK_TYPE, PROPOSAL_COUNT
     task_metric = cfg.problems.metric
-    task_type = cfg.problems.task_type
+    task_type = infer_task_type(task_metric)
     proposal_count = cfg.parameters.mcr.critic.PROPOSAL_COUNT
 
     critic_tools = tool_spec(toolset="memory_tools")

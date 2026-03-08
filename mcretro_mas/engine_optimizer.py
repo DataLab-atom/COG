@@ -108,11 +108,16 @@ class AutoOptimizer:
         timeout=300,
         ignore_list=None,
         history_dir="./history",
+        score_fn=None,
     ):
         self.project_root = os.path.abspath(project_root)
         self.entry_point = entry_point
         self.timeout = timeout
         self.ignore_list = ignore_list or ["__pycache__", "*.pyc", ".git"]
+        # score_fn(metrics: dict) -> float, defaults to single-value passthrough or sum
+        self.score_fn = score_fn or (
+            lambda m: next(iter(m.values())) if len(m) == 1 else sum(m.values())
+        )
 
         self.history_dir = os.path.abspath(history_dir)
         os.makedirs(self.history_dir, exist_ok=True)
@@ -182,20 +187,29 @@ class AutoOptimizer:
                 log_event("sandbox_exception", trial_id=trial_id, sandbox_root=sandbox_root, error=str(e))
                 return {"id": trial_id, "score": -999, "error": str(e), "output": output}
 
-            match = re.search(r"METRIC_RESULT:\s*([\d\.-]+)", output)
-            if match:
-                log_event(
-                    "sandbox_run_scored",
-                    trial_id=trial_id,
-                    sandbox_root=sandbox_root,
-                    score=float(match.group(1)),
-                )
-                return {
-                    "id": trial_id,
-                    "score": float(match.group(1)),
-                    "candidate": candidate,
-                    "output": output,
-                }
+            _PREFIX = "__METRICS__:"
+            for line in reversed(output.splitlines()):
+                if line.startswith(_PREFIX):
+                    try:
+                        metrics = json.loads(line[len(_PREFIX):])
+                        score = self.score_fn(metrics)
+                        log_event(
+                            "sandbox_run_scored",
+                            trial_id=trial_id,
+                            sandbox_root=sandbox_root,
+                            metrics=metrics,
+                            score=score,
+                        )
+                        return {
+                            "id": trial_id,
+                            "score": score,
+                            "metrics": metrics,
+                            "candidate": candidate,
+                            "output": output,
+                        }
+                    except Exception as e:
+                        log_event("sandbox_metrics_parse_error", trial_id=trial_id, error=str(e))
+                    break
 
             err_tail = output[-300:] if output else result.stderr[-300:]
             log_event(
@@ -207,7 +221,7 @@ class AutoOptimizer:
             return {
                 "id": trial_id,
                 "score": -999,
-                "error": f"No score found. Tail: {err_tail}",
+                "error": f"No __METRICS__ line found in stdout. Tail: {err_tail}",
                 "output": output + "\nSTDERR:\n" + result.stderr,
             }
 

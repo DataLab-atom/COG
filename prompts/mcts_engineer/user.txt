@@ -1,0 +1,8 @@
+Target file: {{target_file}}
+Target type: {{target_type}}
+Target name: {{target_name}}
+Optimization direction: {{direction}}
+Reasoning: {{reasoning}}
+
+Current implementation:
+{{original_code}}

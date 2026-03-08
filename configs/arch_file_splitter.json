@@ -1,0 +1,86 @@
+{
+  "description": "将单个模块拆分为职责明确的文件列表",
+  "long_running": false,
+  "skills": ["skills/arch_builder.json"],
+  "agent_name": "arch_file_splitter",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/arch_file_split/system.txt",
+  "user_prompt_path": "./prompts/arch_file_split/user.txt",
+  "system_variables": [],
+  "user_variables": ["requirement", "module_json", "all_modules_json"],
+  "json_output": true,
+  "use_instructor": false,
+  "json_schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": ["id", "root", "description", "imports", "types", "functions", "constants"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^file::.+/.+",
+          "description": "文件唯一标识，格式 file::<module>/<name>"
+        },
+        "root": {
+          "type": "boolean",
+          "description": "是否位于项目根目录"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "names"],
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string",
+                "pattern": "^file::.+",
+                "description": "来源文件 id"
+              },
+              "names": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "description": "从该文件导入的名称列表"
+              }
+            }
+          }
+        },
+        "types": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^type::.+" },
+          "description": "本阶段留空"
+        },
+        "functions": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^fn::.+" },
+          "description": "本阶段留空"
+        },
+        "constants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "value"],
+            "additionalProperties": false,
+            "properties": {
+              "name":  { "type": "string", "minLength": 1 },
+              "type":  { "type": "string", "minLength": 1 },
+              "value": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "enable_history": false,
+  "timeout": 60.0,
+  "max_retries": 3,
+  "params": {
+    "max_tokens": 2048,
+    "temperature": 0.2
+  }
+}

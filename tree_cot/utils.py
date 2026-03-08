@@ -85,24 +85,21 @@ def extract_markdown_content(text: str) -> str:
         # 如果没有找到匹配项，返回一个空字符串
         return ""
 
-def save_tree(root_node, save_path):
+def save_tree(root_node, save_path=None):
     """
-    将树对象保存为JSON文件，并返回JSON字符串。
-    此函数在内部处理循环引用问题，无需改变函数签名。
+    将树对象序列化为JSON字符串，并可选地写入文件。
 
     Args:
         root_node (TreeNode): 要保存的树的根节点。
-        save_path (str): 保存JSON文件的路径。
+        save_path (str, optional): 若提供，则将JSON写入该路径；否则仅返回字符串。
+
+    Returns:
+        str: 树的JSON字符串表示。
     """
-    
-    # 1. 在函数内部定义一个嵌套的辅助函数，用于递归地将树转换为字典
+
     def _tree_to_dict(node):
-        """将节点及其后代转换为一个不含循环引用的字典。"""
         if node is None:
             return None
-
-        # 创建当前节点的字典表示，并准备一个 "children" 列表
-        # 我们在这里选择性地包含需要的字段，并主动忽略 'parent' 属性
         node_dict = {
             "ID": node.ID,
             "CurrentNode": node.CurrentNode,
@@ -110,33 +107,20 @@ def save_tree(root_node, save_path):
             "depth": node.depth,
             "children": []
         }
-
-        # 遍历所有子节点（顺着 SonNode 和 BrotherNode 链）
         child = node.SonNode
         while child:
-            # 递归调用，将子树转换为字典并添加到 children 列表中
             node_dict["children"].append(_tree_to_dict(child))
             child = child.BrotherNode
-            
         return node_dict
 
-    # 2. 调用内部辅助函数，从根节点开始，将整个树转换为一个干净的字典
     tree_as_dict = _tree_to_dict(root_node)
-
-    # 3. 将这个干净的字典序列化为 JSON 字符串
-    # 因为 tree_as_dict 是一个纯字典，不再需要 default=lambda...
     json_output = json.dumps(tree_as_dict, indent=4, ensure_ascii=False)
 
-    # 4. 将JSON字符串写入文件
-    with open(save_path, 'w', encoding='utf-8') as f:
-        f.write(json_output)
+    if save_path:
+        with open(save_path, 'w', encoding='utf-8') as f:
+            f.write(json_output)
 
-    # 5. 按照你原有的逻辑，重新读取文件内容并返回
-    # (更高效的方式是直接 return json_output，但这里保持与你原代码一致)
-    with open(save_path, 'r', encoding='utf-8') as f:
-        TreeNode_str = f.read()
-        
-    return TreeNode_str
+    return json_output
 
 
 def extract_code_with_structures(file_path, keep_last=False):

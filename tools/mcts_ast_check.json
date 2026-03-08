@@ -1,0 +1,29 @@
+{
+  "name": "mcts_ast_check",
+  "description": "对 LLM 生成的代码执行 AST 语法检查，通过则返回完整 patch 对象，失败则丢弃（不计惩罚）",
+  "long_running": false,
+  "module": "utils.mcts_tools",
+  "function": "mcts_ast_check",
+  "parameters": {
+    "type": "object",
+    "required": ["code", "target_file", "target_type", "target_name"],
+    "properties": {
+      "code": {
+        "type": "string",
+        "description": "LLM 输出的原始代码字符串（可含 markdown 代码围栏）"
+      },
+      "target_file": {
+        "type": "string",
+        "description": "相对路径，例如 src/model.py"
+      },
+      "target_type": {
+        "type": "string",
+        "description": "function 或 class"
+      },
+      "target_name": {
+        "type": "string",
+        "description": "要替换的函数名或类名"
+      }
+    }
+  }
+}

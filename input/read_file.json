@@ -1,0 +1,16 @@
+{
+  "name": "read_file",
+  "description": "异步读取本地文件内容，返回文本字符串及元数据",
+  "long_running": false,
+  "module": "utils.input_utils",
+  "function": "read_file",
+  "async": true,
+  "parameters": {
+    "type": "object",
+    "required": ["path"],
+    "properties": {
+      "path":     { "type": "string", "description": "文件路径（绝对路径或相对当前工作目录的相对路径）" },
+      "encoding": { "type": "string", "description": "文件编码", "default": "utf-8" }
+    }
+  }
+}

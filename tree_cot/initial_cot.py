@@ -2,7 +2,6 @@ import copy
 import os
 import subprocess
 import logging
-import numpy as np
 from pathlib import Path
 from typing import Any, Optional
 from itertools import chain
@@ -35,7 +34,6 @@ from .utils import (
     extract_json,
     generate_project_tree_text,
     remove_main_block,
-    save_list_to_npy,
     save_tree,
     set_code_to_file,
     visualize_tree,
@@ -94,12 +92,12 @@ class TreeCoTModule:
         self.node_tree = CircularQueue(2000)
         self.dialogue_queue = CircularQueue(2000)
         self.retry_times = cfg.parameters.tree_cot.retry_times
-    def run(self, imply_doc: Optional[str] = None) -> str:
+    def run(self, imply_doc: Optional[str] = None, metric_fn_content: Optional[str] = None) -> str:
         """
         执行 Tree CoT 流程的主入口
-        :param task_name: 任务名称，用于生成文件路径
-        :param retry_times: 代码生成的重试次数
         :param imply_doc: 可选，Implementation Plan 的内容。如果不传，则尝试从文件读取。
+        :param metric_fn_content: 可选，metric_fn.py 的完整代码字符串。若提供，会写入 dst_dir
+                                   并在 combine_code prompt 中指示 LLM 直接 import 使用。
         :return: 生成的代码输出目录路径
         """
         # 每次运行前重置状态
@@ -144,30 +142,36 @@ class TreeCoTModule:
             raise RuntimeError("Failed to create output folder.")
         dst_path = Path(dst_dir)
 
+        # 写入 metric_fn.py（若由 metric_agent 提供）
+        if metric_fn_content:
+            (dst_path / "metric_fn.py").write_text(metric_fn_content, encoding="utf-8")
+            self.logger.info("metric_fn.py written to %s", dst_path)
+
         # 开始树形对话，细化节点
         self._chat_tree(root, dst_path)
 
-        # 收集叶子节点并保存元数据
+        # 收集叶子节点（全程内存）
         leaves, classes, desc, paths = collect_leaves_recursive(root, dst_dir)
-        save_list_to_npy(leaves, classes, desc, paths, str(dst_path / "leaf_nodes.npy"))
-        
-        root_str = save_tree(root, str(dst_path / "tree.json"))
+        leaf_nodes_data = {'leaves': leaves, 'desc': desc, 'classes': classes, 'paths': paths}
+
+        root_str = save_tree(root)  # 不写文件，直接返回 JSON 字符串
         multiway_root = convert_to_multiway(root)
         visualize_tree(multiway_root, str(dst_path / self.task_name))
 
-        # 生成文档
-        self._create_doc(
-            leaf_nodes_path=str(dst_path / "leaf_nodes.npy"), 
+        # 生成文档（内存传递）
+        leaf_nodes_data = self._create_doc(
+            leaf_nodes_data=leaf_nodes_data,
             tree_str=root_str
         )
 
-        # 生成代码
+        # 生成代码（内存传递）
         generate_project_tree_text(project_path=str(dst_path), output_filepath=str(dst_path / "project_tree.txt"))
         self._generate_code_logic(
             dst_dir=str(dst_path),
-            path_list=str(dst_path / "leaf_nodes.npy"),
+            leaf_nodes_data=leaf_nodes_data,
             retry_times=self.retry_times,
-            tree_str=root_str
+            tree_str=root_str,
+            metric_fn_content=metric_fn_content or "",
         )
 
         return str(dst_path)
@@ -218,7 +222,6 @@ class TreeCoTModule:
     def _chat_tree(self, root: TreeNode, output_dir: Path) -> None:
         """处理树形结构对话，深入生成子节点"""
         while not self.node_tree.isEmpty():
-            save_tree(root, str(output_dir / "tree.json"))
             node_info = self.node_tree.dequeue()
             node_dialogue = self.dialogue_queue.dequeue()
             
@@ -230,13 +233,10 @@ class TreeCoTModule:
                 chat_and_append(self.llm_structure, node_dialogue, temperature=self.temp_structure)
                 self._generate_brother_node(node_dialogue, parent_node=node_info)
 
-    def _create_doc(self, *, leaf_nodes_path: str, tree_str: str) -> None:
-
-        leaf_nodes_data = np.load(leaf_nodes_path, allow_pickle=True).item()
-        
-        paths = leaf_nodes_data.get("paths", [])
-
-        root_dir = os.path.dirname(leaf_nodes_path)
+    def _create_doc(self, *, leaf_nodes_data: dict, tree_str: str) -> dict:
+        """生成文档，全程在内存中操作，返回更新后的 leaf_nodes_data。"""
+        paths = list(leaf_nodes_data.get("paths", []))
+        root_dir = os.path.dirname(paths[0]) if paths else ""
         modified = False
 
         for i in range(len(paths)):
@@ -247,21 +247,20 @@ class TreeCoTModule:
 
         main_path = os.path.join(root_dir, 'main.py')
         main_exists = any(path == main_path for path in paths)
-        
+
         if modified and not main_exists:
             paths.append(main_path)
-            
 
+        leaf_nodes_data = dict(leaf_nodes_data)
         leaf_nodes_data["paths"] = paths
-
 
         leaves = leaf_nodes_data["leaves"]
         desc = leaf_nodes_data["desc"]
-        
+
         doc_messages: list[dict[str, Any]] = [{"role": "system", "content": dev_sys_prompt()}]
         documents: list[str] = []
         combined = list(chain(zip(leaves, desc), [(None, None)]))
-        
+
         for i, (leaf, description) in enumerate(combined):
             if i == 0:
                 doc_messages.append({
@@ -275,7 +274,6 @@ class TreeCoTModule:
             else:
                 doc_messages.append({"role": "user", "content": dev_doc_main()})
 
-            # 使用 self.llm_doc 和 self.temp_doc
             content = self.llm_doc.chat_with_tools(
                 doc_messages,
                 tools=tool_spec("memory_tools"),
@@ -283,11 +281,10 @@ class TreeCoTModule:
                 temperature=self.temp_doc,
                 need_append_msg=True,
             )
-            #doc_messages.append({"role": "assistant", "content": content})
             documents.append(content)
 
         leaf_nodes_data["documents"] = documents
-        np.save(leaf_nodes_path, leaf_nodes_data, allow_pickle=True)
+        return leaf_nodes_data
     def _test_and_fix_code(
         self,
         retry_times: int,
@@ -353,16 +350,16 @@ class TreeCoTModule:
     def _generate_code_logic(
         self,
         dst_dir: str,
-        path_list: str,
+        leaf_nodes_data: dict,
         retry_times: int,
         *,
         tree_str: str,
+        metric_fn_content: str = "",
     ) -> list[dict[str, Any]]:
-        """根据文档和结构生成代码"""
+        """根据文档和结构生成代码（内存传递，无 .npy 读写）"""
         messages: list[dict[str, Any]] = [{"role": "system", "content": generate_code_system_prompt()}]
-        path_data = np.load(path_list, allow_pickle=True).item()
-        documents = path_data.get("documents", [])
-        folder_path_list = path_data.get("paths", [])
+        documents = leaf_nodes_data.get("documents", [])
+        folder_path_list = leaf_nodes_data.get("paths", [])
         ds_path = self.cfg.problems.dataset_path
         for i, (doc, folder_path) in enumerate(zip(documents, folder_path_list)):
             project_tree_file = Path(dst_dir) / "project_tree.txt"
@@ -382,7 +379,7 @@ class TreeCoTModule:
             elif i < len(documents) - 1:
                 messages.append({"role": "user", "content": generate_code_prompt(doc, folder_path, structure=file_structure_str)})
             else:
-                messages.append({"role": "user", "content": combine_code(complete_structure=file_structure_str, dev_doc="", path=folder_path, task_metric = self.task_metric)})
+                messages.append({"role": "user", "content": combine_code(complete_structure=file_structure_str, dev_doc="", path=folder_path, task_metric=self.task_metric, metric_fn_content=metric_fn_content)})
                 combined_code, stop = self._test_and_fix_code(retry_times, messages, folder_path)
                 if stop:
                     raise RuntimeError("Failed to generate code after maximum retries.")

@@ -1,0 +1,31 @@
+{
+  "name": "mcts_single_combo",
+  "description": "MCTS 单个 (op×angle) 组合评估：Critic → Engineer → AST 检查 → 沙盒评分",
+  "long_running": true,
+  "owned_by": "graphs/mcts_single_combo.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["op", "angle", "demand", "tree_text", "history_prompt", "baseline_log", "project_root", "ancestor_patches", "sandbox_timeout"],
+    "properties": {
+      "op":               { "type": "string" },
+      "angle":            { "type": "string" },
+      "demand":           { "type": "string" },
+      "tree_text":        { "type": "string" },
+      "history_prompt":   { "type": "string" },
+      "baseline_log":     { "type": "string" },
+      "project_root":     { "type": "string" },
+      "ancestor_patches": { "type": "array" },
+      "sandbox_timeout":  { "type": "number" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "op":       { "type": "string" },
+      "angle":    { "type": "string" },
+      "proposal": { "type": "object" },
+      "ast_ok":   { "type": "boolean" },
+      "result":   { "type": "object" }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "arch_fn_codegen_fanout",
+  "description": "并发为所有函数调用 arch_codegen agent 生成函数体，返回 {fn_id: body} 映射",
+  "long_running": false,
+  "module": "utils.arch_fn_codegen_fanout",
+  "function": "arch_fn_codegen_fanout",
+  "async": true,
+  "parameters": {
+    "type": "object",
+    "required": ["tree", "fn_stubs"],
+    "properties": {
+      "tree":     { "type": "array",  "description": "完整的架构树" },
+      "fn_stubs": { "type": "object", "description": "scaffold 返回的 fn_stubs 映射" }
+    }
+  }
+}
