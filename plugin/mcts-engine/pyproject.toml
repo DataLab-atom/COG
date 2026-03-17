@@ -14,3 +14,6 @@ dependencies = [
 
 [project.scripts]
 mcts-engine = "server:main"
+
+[tool.hatch.build.targets.wheel]
+include = ["server.py", "selection.py", "models.py"]
