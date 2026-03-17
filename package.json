@@ -1,0 +1,32 @@
+{
+  "name": "cog-mcts",
+  "version": "0.1.0",
+  "description": "Git-native MCTS search engine for structural code optimization. Beam Search with UCB selection, async human gate, and cross-run op memory.",
+  "keywords": [
+    "ai",
+    "mcts",
+    "code-optimization",
+    "mcp",
+    "openclaw",
+    "claude"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DataLab-atom/COG.git"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "bin": {
+    "cog-mcts": "scripts/cli.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "files": [
+    "plugin/",
+    "scripts/",
+    "README.md"
+  ]
+}

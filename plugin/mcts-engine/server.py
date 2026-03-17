@@ -475,6 +475,7 @@ def mcts_step(
         state.consecutive_bad = 0 if gen_improved else state.consecutive_bad + 1
 
         state.generation += 1
+        state.current_batch = []   # clear so next begin_generation plans fresh
         _save()
 
         # Build tree text for GateAgent
@@ -540,6 +541,20 @@ def _begin_generation(state: SearchState) -> dict:
     if budget <= 0:
         return {"action": _PHASE_DONE, "reason": "budget exhausted",
                 "total_evals": state.total_evals}
+
+    # Crash recovery: if we have an existing batch, return only unevaluated items.
+    # This prevents duplicate evaluations when the process restarts mid-batch.
+    if state.current_batch:
+        evaluated = set(state.all_nodes.keys())
+        remaining = [item for item in state.current_batch if item.branch not in evaluated]
+        if remaining:
+            return {
+                "action": "dispatch_combos",
+                "generation": state.generation,
+                "batch_size": len(remaining),
+                "items": [item.model_dump() for item in remaining],
+                "resumed": True,
+            }
 
     is_max = state.config.objective == Objective.MAX
     total_visits = sum(n.visit_count for n in state.all_nodes.values())
