@@ -1,12 +1,11 @@
 # GateAgent
 
-You manage the async human decision gate. You send a search tree snapshot to the user
-and wait for their response — without blocking the process.
+You manage the async human decision gate using OpenClaw's native messaging channel and cron.
+You do NOT call any mcts-engine MCP tools for notification — messaging is handled by the platform.
 
 ## When
 
 Triggered by OrchestratorAgent when `mcts_step("select")` returns `action == "gate"`.
-Runs every `gate_interval` generations (configurable, default: every generation).
 
 ## Input
 
@@ -27,67 +26,89 @@ Runs every `gate_interval` generations (configurable, default: every generation)
 
 ## Flow
 
-### 1. Notify
+### 1. Build message
 
-```python
-result = mcts_gate_notify(
-    channel_id=<configured_channel>,
-    generation=step.generation,
-    tree_text=step.tree_text,
-    top_nodes=step.top_nodes,
-    timeout_minutes=30
-)
-# → {resume_token: "..."}
-# Side effect: creates cron task for auto-continue after 30min
-```
+Format the tree snapshot as a human-readable message:
 
-Message format sent to user:
 ```
 [COG MCTS] Gen {N} complete
 
 Best: {score} ({+X%} vs baseline)
-Trend: {score_0} → {score_1} → ... → {score_N}
 
 Search tree:
-  [root] {baseline_score}
-  ├─ [gen1/insert] {score}
-  │   └─ [gen3/merge] {score}
-  │       └─ [gen5/insert] {score} ← best
-  └─ [gen2/decouple] {score}
+{tree_text}
 
 This generation:
-  #1 gen5/insert  {score}  {delta} ← recommended
-  #2 gen5/merge   {score}  {delta}
-  #3 gen5/cache   {score}  {delta}
+  #1 {branch}  {score}  {delta} ← recommended
+  #2 {branch}  {score}  {delta}
+  #3 {branch}  {score}  {delta}
 
-Commands (auto-continue in 30min if no response):
-  continue              — keep going with current best as frontier
-  stop                  — stop, apply current best
-  rollback              — revert frontier to previous generation
-  select gen5/insert    — force this node as frontier
-  freeze gen5/cache     — stop exploring this branch
-  boost gen5/merge      — prioritize this branch next generation
+Commands (auto-continue in 30min):
+  continue | stop | rollback
+  select {branch} | freeze {branch} | boost {branch}
 ```
 
-### 2. Wait
+### 2. Send via OpenClaw channel
 
-```python
-response = mcts_gate_wait(resume_token=result.resume_token)
-# → {action: "continue"|"stop"|"rollback"|"select"|"freeze"|"boost",
-#    selected_branch: "..." (for select),
-#    target_branch: "..."  (for freeze/boost)}
+Use whichever messaging channel is configured (WhatsApp, Telegram, Slack, etc.):
+
+```
+# Example — Telegram:
+exec command:"openclaw send --channel telegram --to {user_id} --message '{message}'"
+
+# Example — WhatsApp (wacli):
+/wacli send {phone} "{message}"
+
+# Example — Slack:
+/slack message channel:{channel} text:"{message}"
 ```
 
-### 3. Report
+### 3. Set auto-continue cron
 
-```python
+Register a cron task that fires in 30 minutes and injects "continue" if no response has arrived:
+
+```
+cron action:schedule delay:30m task:"mcts_step gate_done action:continue" once:true id:gate-{run_id}-gen{N}
+```
+
+### 4. Wait for response
+
+Poll the channel for incoming message (every 60s) or wait for the cron to fire:
+
+```
+# Poll loop:
+while not received:
+    sessions_send agentId:self message:"check_inbox"
+    sleep 60s
+
+# Or use webhooks if the channel supports push:
+webhooks register event:message filter:"from:{user_id}" handler:gate_response
+```
+
+Accepted responses (case-insensitive):
+```
+"continue"           → action: "continue",  selected_branch: ""
+"stop"               → action: "stop",       selected_branch: ""
+"rollback"           → action: "rollback",   selected_branch: ""
+"select {branch}"    → action: "select",     selected_branch: "{branch}"
+"select #1"          → action: "select",     selected_branch: top_nodes[0].branch
+"freeze {branch}"    → action: "freeze",     selected_branch: "{branch}"
+"boost {branch}"     → action: "boost",      selected_branch: "{branch}"
+```
+
+### 5. Cancel cron + report
+
+```
+cron action:cancel id:gate-{run_id}-gen{N}
+
 mcts_step("gate_done",
           action=response.action,
-          selected_branch=response.selected_branch or "")
+          selected_branch=response.selected_branch)
 ```
 
 ## Tools
 
-- `mcts_gate_notify` — push snapshot + set cron timeout
-- `mcts_gate_wait` — block until response or timeout
-- `mcts_step` — report gate outcome
+- OpenClaw messaging channel (whichever is configured — Telegram/WhatsApp/Slack/etc.)
+- `cron` — auto-continue timeout (Layer 1 built-in)
+- `webhooks` — push-based response (Layer 1 built-in, optional)
+- `mcts_step` — report gate outcome to state machine

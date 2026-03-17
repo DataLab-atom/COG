@@ -603,56 +603,6 @@ def _build_tree_text(state: SearchState) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Gate tools (called by GateAgent)
-# ---------------------------------------------------------------------------
-
-
-@mcp.tool()
-def mcts_gate_notify(
-    channel_id: str,
-    generation: int,
-    tree_text: str,
-    top_nodes: list[dict],
-    timeout_minutes: int = 30,
-) -> dict:
-    """Push tree snapshot to messaging channel and set auto-continue cron.
-
-    Args:
-        channel_id: Messaging channel identifier.
-        generation: Current generation number.
-        tree_text: ASCII tree of the current search state.
-        top_nodes: List of top nodes with branch, score, op, delta.
-        timeout_minutes: Minutes before auto-continue fires.
-    """
-    import hashlib, time
-    resume_token = hashlib.sha256(f"{channel_id}:{generation}:{time.time()}".encode()).hexdigest()[:16]
-    # Platform-specific messaging is handled by OpenClaw's channel system.
-    # We return the resume_token for mcts_gate_wait to use.
-    return {
-        "resume_token": resume_token,
-        "channel_id": channel_id,
-        "timeout_minutes": timeout_minutes,
-        "message": "Gate notification dispatched",
-    }
-
-
-@mcp.tool()
-def mcts_gate_wait(resume_token: str) -> dict:
-    """Wait for user response from gate notification, or auto-continue on timeout.
-
-    Args:
-        resume_token: Token returned by mcts_gate_notify.
-    """
-    # OpenClaw messaging integration point.
-    # Returns user response or timeout auto-continue.
-    return {
-        "action": "continue",
-        "selected_branch": "",
-        "source": "timeout_auto_continue",
-    }
-
-
-# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 

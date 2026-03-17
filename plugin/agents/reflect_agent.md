@@ -39,6 +39,15 @@ Write `memory/projects/{project_hash}/runs/{run_id}/gen_{N}.md`:
 - which op, which parent branch
 - why it likely helped (data-driven hypothesis)
 
+### 1b. Semantic memory search (if memory-lancedb available)
+
+Before writing, search past runs for similar ops on similar code:
+```
+memory action:search query:"{op} on {target_function}" limit:5
+```
+If results found, prepend to this generation's reflection as "Prior context".
+Avoids re-exploring patterns already proven to fail.
+
 ### 2. Op memory update
 
 For each op that ran this generation:
