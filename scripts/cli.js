@@ -57,15 +57,15 @@ function setupClaude() {
   writeJSON(settingsPath, settings);
   console.log(`  Updated ${settingsPath}`);
 
-  // Link skills into ~/.claude/skills/
+  // Copy skills into ~/.claude/skills/
   const claudeSkills = path.join(os.homedir(), '.claude', 'skills');
   fs.mkdirSync(claudeSkills, { recursive: true });
   for (const skill of fs.readdirSync(SKILLS_DIR)) {
     const src = path.join(SKILLS_DIR, skill);
     const dst = path.join(claudeSkills, skill);
     if (!fs.existsSync(dst)) {
-      fs.symlinkSync(src, dst);
-      console.log(`  Linked skill: ${skill}`);
+      spawnSync('cp', ['-r', src, dst], { stdio: 'inherit' });
+      console.log(`  Copied skill: ${skill}`);
     } else {
       console.log(`  Skill already exists: ${skill}`);
     }

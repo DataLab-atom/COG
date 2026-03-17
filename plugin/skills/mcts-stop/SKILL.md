@@ -1,3 +1,8 @@
+---
+name: mcts-stop
+description: "Stop the search and apply the current best node"
+---
+
 # /mcts-stop
 
 Stop the search and apply the current best node.
