@@ -1,2 +1,0 @@
-# Writing subtasks that require thinking and expression:
-{{task_goal}}

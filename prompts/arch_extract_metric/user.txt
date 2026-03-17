@@ -1,5 +1,0 @@
-需求描述：
-{{requirement}}
-
-项目架构树（JSON）：
-{{tree_json}}

@@ -1,8 +1,0 @@
-Analysis perspective: {{analysis_perspective}}
-Experimental metric: {{experimental_metric}}
-
-Experiment output (stdout):
-{{experiment_output}}
-
-Result data directory: {{result_dir}}
-Save chart to: {{chart_save_path}}

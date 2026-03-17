@@ -1,2 +1,0 @@
-# The writing subtask you need to complete is:
-{{task_goal}}

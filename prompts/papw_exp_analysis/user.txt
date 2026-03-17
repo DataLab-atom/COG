@@ -1,9 +1,0 @@
-Analysis perspective: {{analysis_perspective}}
-Core focus: {{core_focus}}
-Expected insight: {{expected_insight}}
-Experimental metric: {{experimental_metric}}
-
-Execution status: {{execution_status}}
-
-Experiment output:
-{{experiment_output}}

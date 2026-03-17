@@ -1,1 +1,0 @@
-{{tex_and_bib}}
