@@ -1,9 +1,9 @@
 {
   "name": "arch_to_project",
-  "description": "将架构树转换为真实 Python 项目：骨架生成 → 并发函数体生成 → 组装写入磁盘",
-  "long_running": false,
+  "description": "将架构树转换为真实 Python 项目：骨架生成 → 并发函数体生成（依赖感知 map）→ 组装写入磁盘 → 语法检查 → 沙盒运行验证（失败则 LLM 修复，最多三次）",
+  "long_running": true,
   "skills": ["skills/arch_to_project.json"],
-  "variables": ["tree", "output_dir"],
+  "variables": ["tree", "output_dir", "metric_name", "data_files"],
   "steps": [
     {
       "id": "scaffold",
@@ -15,25 +15,59 @@
       }
     },
     {
-      "id": "fn_codegen",
-      "type": "input",
-      "ref": "arch_fn_codegen_fanout",
+      "id": "build_codegen_tasks",
+      "type": "tool",
+      "ref": "arch_build_codegen_tasks",
       "depends_on": ["scaffold"],
       "inputs": {
-        "tree":     "$.tree",
-        "fn_stubs": "scaffold.fn_stubs"
+        "tree":        "$.tree",
+        "fn_stubs":    "scaffold.fn_stubs",
+        "metric_name": "$.metric_name"
+      }
+    },
+    {
+      "id": "fn_codegen",
+      "type": "map",
+      "depends_on": ["build_codegen_tasks"],
+      "over": "build_codegen_tasks.tasks",
+      "as": "task",
+      "item_key": "task.fn_id",
+      "item_depends_on": "task.all_deps",
+      "deps_as": "_deps",
+      "step": {
+        "type": "graph",
+        "ref": "graphs/arch_codegen_single.json",
+        "inputs": {
+          "task":        "$.task",
+          "_deps":       "$._deps",
+          "metric_name": "$.metric_name",
+          "data_files":  "$.data_files"
+        }
+      },
+      "collect": "keyed"
+    },
+    {
+      "id": "collect_results",
+      "type": "tool",
+      "ref": "arch_collect_fn_bodies",
+      "depends_on": ["build_codegen_tasks", "fn_codegen"],
+      "inputs": {
+        "tasks":           "build_codegen_tasks.tasks",
+        "keyed_results":   "fn_codegen",
+        "existing_bodies": "build_codegen_tasks.existing_bodies"
       }
     },
     {
       "id": "assemble",
       "type": "tool",
       "ref": "arch_assemble",
-      "depends_on": ["scaffold", "fn_codegen"],
+      "depends_on": ["scaffold", "collect_results"],
       "inputs": {
-        "skeletons":  "scaffold.skeletons",
-        "fn_bodies":  "fn_codegen.fn_bodies",
-        "fn_stubs":   "scaffold.fn_stubs",
-        "output_dir": "$.output_dir"
+        "skeletons":    "scaffold.skeletons",
+        "fn_bodies":    "collect_results.fn_bodies",
+        "fn_stubs":     "scaffold.fn_stubs",
+        "output_dir":   "$.output_dir",
+        "file_imports": "collect_results.file_imports"
       }
     },
     {
@@ -44,11 +78,33 @@
       "inputs": {
         "written": "assemble.written"
       }
+    },
+    {
+      "id": "verify_and_fix",
+      "type": "graph",
+      "ref": "graphs/arch_verify_and_fix.json",
+      "depends_on": ["syntax_check"],
+      "inputs": {
+        "output_dir":  "$.output_dir",
+        "metric_name": "$.metric_name"
+      }
+    },
+    {
+      "id": "enrich_tree",
+      "type": "tool",
+      "ref": "arch_enrich_tree_with_bodies",
+      "depends_on": ["verify_and_fix"],
+      "inputs": {
+        "tree":       "$.tree",
+        "fn_bodies":  "collect_results.fn_bodies",
+        "output_dir": "$.output_dir"
+      }
     }
   ],
   "outputs": {
-    "ok":             "syntax_check.ok",
-    "syntax_errors":  "syntax_check.errors",
-    "written":        "assemble.written"
+    "ok":            "verify_and_fix.ok",
+    "syntax_errors": "syntax_check.errors",
+    "written":       "assemble.written",
+    "tree":          "enrich_tree.tree"
   }
 }

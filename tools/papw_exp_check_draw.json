@@ -1,0 +1,14 @@
+{
+  "name": "papw_exp_check_draw",
+  "description": "检查绘图脚本执行结果，判断是否需要修复",
+  "module": "utils.papw_tools",
+  "function": "papw_exp_check_draw",
+  "parameters": {
+    "type": "object",
+    "required": ["success", "stderr"],
+    "properties": {
+      "success": { "type": "boolean", "description": "脚本是否执行成功" },
+      "stderr": { "type": "string", "description": "标准错误输出" }
+    }
+  }
+}

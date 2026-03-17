@@ -1,0 +1,27 @@
+{
+  "description": "U2E 短期反思 Agent：对比 worse/better 代码，输出不超过 20 词的启发式设计提示",
+  "long_running": false,
+  "skills": [
+    "skills/u2e_short_term_reflector.json"
+  ],
+  "agent_name": "u2e_short_term_reflector",
+  "model": "gpt-4o-mini",
+  "system_prompt_path": "./prompts/u2e/short_term_reflector/system.txt",
+  "user_prompt_path": "./prompts/u2e/short_term_reflector/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "func_name",
+    "problem_desc",
+    "func_desc",
+    "worse_code",
+    "better_code"
+  ],
+  "json_output": false,
+  "enable_history": false,
+  "timeout": 30.0,
+  "max_retries": 2,
+  "params": {
+    "max_tokens": 256,
+    "temperature": 0.8
+  }
+}

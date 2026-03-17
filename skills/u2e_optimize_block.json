@@ -1,0 +1,32 @@
+{
+  "name": "u2e_optimize_block",
+  "description": "U2E 进化优化完整块：构建函数任务 → 启动 sandbox 会话 → 迭代进化循环 → 应用最优 → 关闭 sandbox",
+  "long_running": true,
+  "owned_by": "graphs/u2e_optimize_block.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["tree", "requirement", "output_dir"],
+    "properties": {
+      "tree":                  { "type": "array",  "description": "架构树" },
+      "requirement":           { "type": "string", "description": "需求描述" },
+      "mcts_best_patches":     { "type": "array",  "description": "MCTS 最优节点 patches（可为 null）" },
+      "output_dir":            { "type": "string", "description": "项目输出目录" },
+      "beam_width":            { "type": "integer","description": "sandbox 并行数" },
+      "sandbox_timeout":       { "type": "integer","description": "sandbox 超时秒数" },
+      "pop_size":              { "type": "integer","description": "种群大小" },
+      "mutation_rate":         { "type": "number", "description": "变异率" },
+      "max_fe":                { "type": "integer","description": "最大函数评估次数" },
+      "user_generator_prompt": { "type": "string", "description": "用户自定义生成器提示" },
+      "external_knowledge":    { "type": "string", "description": "外部知识" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "elitist":          { "type": "object", "description": "最优个体" },
+      "best_obj_overall": { "type": "number", "description": "最优目标值" },
+      "function_evals":   { "type": "integer","description": "总函数评估次数" },
+      "apply_result":     { "type": "object", "description": "写回结果" }
+    }
+  }
+}

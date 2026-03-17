@@ -1,0 +1,30 @@
+{
+  "preset": "default",
+  "description": "将方法论章节从 Markdown 转换为可编译的 LaTeX 代码",
+  "long_running": false,
+  "skills": [
+    "skills/papw_method_writing.json"
+  ],
+  "agent_name": "papw_method_generate_tex",
+  "system_prompt_path": "./prompts/papw_method_generate_tex/system.txt",
+  "user_prompt_path": "./prompts/papw_method_generate_tex/user.txt",
+  "system_variables": [
+    "tex_template"
+  ],
+  "user_variables": [
+    "content"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "tex_code"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "tex_code": {
+        "type": "string",
+        "description": "完整的 LaTeX 代码"
+      }
+    }
+  }
+}

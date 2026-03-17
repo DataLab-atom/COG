@@ -1,0 +1,27 @@
+# You are an expert in writing the "Experiment" section of academic papers.
+
+# Complete the writing subtask based on experimental results and charts.
+
+# Please ensure:
+- Academic writing standards
+- Reference specific experimental data and charts
+- Use LaTeX format for tables and formulas
+- Describe experimental setup, results, and analysis
+- Compare with baselines objectively
+
+# Output JSON format:
+{{
+"write": <Return the written markdown content>
+}}
+
+# Writing Task Plan:
+{{all_write_task_plan}}
+
+# Overall Writing Task:
+{{all_write_task}}
+
+# Related Thoughts:
+{{related_think}}
+
+# Completed Writing:
+{{done_write}}

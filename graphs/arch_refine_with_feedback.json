@@ -1,0 +1,48 @@
+{
+  "name": "arch_refine_with_feedback",
+  "description": "接收人类反馈后对架构树进行整体重构：先由 arch_feedback_classifier 决定修改策略（patch_chain 或 full_rebuild），再执行对应路径生成新设计树。仅输出设计树，代码生成由上层调用方统一处理",
+  "long_running": false,
+  "skills": ["skills/arch_refine_with_feedback.json"],
+  "variables": ["tree", "requirement", "metric_name", "direction", "feedback"],
+  "steps": [
+    {
+      "id": "classify",
+      "type": "agent",
+      "ref": "configs/arch_feedback_classifier.json",
+      "inputs": {
+        "tree_json":   "$.tree",
+        "requirement": "$.requirement",
+        "feedback":    "$.feedback"
+      }
+    },
+    {
+      "id": "apply_or_rebuild",
+      "type": "cond",
+      "depends_on": ["classify"],
+      "condition": "{{classify.use_patches}}",
+      "if_true": {
+        "type": "tool",
+        "ref": "arch_apply_design_patches",
+        "inputs": {
+          "tree":        "$.tree",
+          "patch_chain": "classify.patch_chain"
+        }
+      },
+      "if_false": {
+        "type": "graph",
+        "ref": "graphs/arch_build_with_feedback.json",
+        "inputs": {
+          "requirement": "$.requirement",
+          "feedback":    "$.feedback",
+          "metric_name": "$.metric_name",
+          "direction":   "$.direction"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "tree":      "apply_or_rebuild.tree",
+    "strategy":  "classify.strategy",
+    "reasoning": "classify.reasoning"
+  }
+}

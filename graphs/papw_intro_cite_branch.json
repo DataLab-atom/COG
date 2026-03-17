@@ -1,0 +1,69 @@
+{
+  "name": "papw_intro_cite_branch",
+  "description": "引言写作引用分支：VDB 检索 → 选择引用 → 带引用写作",
+  "long_running": true,
+  "variables": [
+    "full_text_vb_path",
+    "embedding_model",
+    "embedding_model_source",
+    "reranker_path",
+    "reranker_model_source",
+    "database_device",
+    "used_bib_set",
+    "all_write_task_plan",
+    "done_write",
+    "all_write_task",
+    "tex_template",
+    "task_goal",
+    "think_content"
+  ],
+  "steps": [
+    {
+      "id": "retrieve",
+      "type": "input",
+      "ref": "input/papw_vdb_search_rerank.json",
+      "inputs": {
+        "persist_directory_path": "$.full_text_vb_path",
+        "query": "$.think_content",
+        "retrieval_num": 10,
+        "embedding_model": "$.embedding_model",
+        "embedding_model_source": "$.embedding_model_source",
+        "reranker_path": "$.reranker_path",
+        "reranker_model_source": "$.reranker_model_source",
+        "database_device": "$.database_device"
+      }
+    },
+    {
+      "id": "select_cite",
+      "type": "tool",
+      "ref": "tools/papw_select_citations.json",
+      "depends_on": ["retrieve"],
+      "inputs": {
+        "retrieval_results": "retrieve.results",
+        "used_bib_set": "$.used_bib_set",
+        "max_cite_num": 3,
+        "max_data_per_cite": 3
+      }
+    },
+    {
+      "id": "write_cite",
+      "type": "agent",
+      "ref": "configs/papw_intro_write_cite.json",
+      "depends_on": ["select_cite"],
+      "inputs": {
+        "all_write_task_plan": "$.all_write_task_plan",
+        "done_write": "$.done_write",
+        "all_write_task": "$.all_write_task",
+        "tex_template": "$.tex_template",
+        "task_goal": "$.task_goal",
+        "think_content": "$.think_content",
+        "references": "select_cite.formatted_text_refs"
+      }
+    }
+  ],
+  "outputs": {
+    "tex_code": "write_cite.tex_code",
+    "selected_bib_entries": "select_cite.selected_bib_entries",
+    "has_bib": true
+  }
+}

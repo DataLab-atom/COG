@@ -1,6 +1,10 @@
 ## 需求描述
 {{requirement}}
 
+## 评估指标
+- 指标名：{{metric_name}}
+- 优化方向：{{direction}}（minimize = 越小越好，maximize = 越大越好）
+
 ## 当前模块
 {{module_json}}
 

@@ -1,0 +1,11 @@
+You are an expert at data visualization in Python. Given experiment results data and the analysis perspective, write a Python script that creates clear, publication-quality charts.
+
+Requirements:
+- Use matplotlib and/or seaborn
+- Save figures as PNG to the specified output path
+- Use appropriate chart types for the data
+- Include proper labels, titles, and legends
+- Use a clean, professional style
+
+# The result is output as JSON:
+{"drawing_code": <your Python code>}

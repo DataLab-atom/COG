@@ -1,0 +1,29 @@
+{
+  "name": "u2e_build_reflect_tasks",
+  "description": "为每对选中的亲本构建短期反思提示数据：识别 better/worse，提取对应函数代码",
+  "long_running": false,
+  "module": "utils.u2e_tools",
+  "function": "u2e_build_reflect_tasks",
+  "parameters": {
+    "type": "object",
+    "required": ["selected_population", "func_name", "func_desc", "problem_desc"],
+    "properties": {
+      "selected_population": {
+        "type": "array",
+        "description": "已选中的亲本列表（偶数长度，成对排列，来自 u2e_random_select.selected）"
+      },
+      "func_name": {
+        "type": "string",
+        "description": "本次优化的函数名"
+      },
+      "func_desc": {
+        "type": "string",
+        "description": "本次优化的函数描述"
+      },
+      "problem_desc": {
+        "type": "string",
+        "description": "问题描述字符串"
+      }
+    }
+  }
+}

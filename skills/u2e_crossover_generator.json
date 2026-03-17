@@ -1,0 +1,22 @@
+{
+  "name": "u2e_crossover_generator",
+  "description": "根据短期反思与 worse/better 代码，生成改进后的函数 Python 实现",
+  "long_running": false,
+  "owned_by": "configs/u2e_crossover_generator.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["user_generator", "func_signature", "worse_code", "better_code", "reflection", "func_name"],
+    "properties": {
+      "user_generator":  { "type": "string", "description": "user_generator 提示词" },
+      "func_signature":  { "type": "string", "description": "目标函数签名" },
+      "worse_code":      { "type": "string", "description": "较差的代码" },
+      "better_code":     { "type": "string", "description": "较好的代码" },
+      "reflection":      { "type": "string", "description": "短期反思提示" },
+      "func_name":       { "type": "string", "description": "目标函数名" }
+    }
+  },
+  "output_schema": {
+    "type": "string",
+    "description": "包含 Python 代码块（```python ... ```）的原始 LLM 响应文本"
+  }
+}

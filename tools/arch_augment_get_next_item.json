@@ -1,0 +1,17 @@
+{
+  "name": "arch_augment_get_next_item",
+  "description": "loop 辅助：从 remaining_items 列表弹出第一个计划项，返回剩余列表和 has_remaining 条件",
+  "module": "utils.arch.design_patch",
+  "function": "arch_augment_get_next_item",
+  "parameters": {
+    "type": "object",
+    "required": ["remaining_items"],
+    "additionalProperties": false,
+    "properties": {
+      "remaining_items": {
+        "type": "array",
+        "description": "尚未处理的计划项列表"
+      }
+    }
+  }
+}

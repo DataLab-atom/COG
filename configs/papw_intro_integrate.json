@@ -1,0 +1,32 @@
+{
+  "preset": "default",
+  "description": "整合引言各子任务写作结果",
+  "long_running": false,
+  "skills": [
+    "skills/papw_introduction_writing.json"
+  ],
+  "agent_name": "papw_intro_integrate",
+  "system_prompt_path": "./prompts/papw_intro_integrate/system.txt",
+  "user_prompt_path": "./prompts/papw_intro_integrate/user.txt",
+  "system_variables": [
+    "tex_template",
+    "all_write_task",
+    "bib_content"
+  ],
+  "user_variables": [
+    "done_write"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "tex_code"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "tex_code": {
+        "type": "string",
+        "description": "整合后的引言 LaTeX 代码"
+      }
+    }
+  }
+}

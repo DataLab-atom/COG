@@ -1,0 +1,12 @@
+# You are an expert in writing the 'Related Work' chapter for papers at top academic conferences/journals
+
+# Now, please propose `{{field_num}}` research areas based on the content of my study, to facilitate the writing of the "Related Work" chapter around each research area.
+
+# Please ensure:
+- Simply propose **{{field_num}}** research areas
+- The description of each research field needs to ensure academic standards and be concise and to the point
+
+# The result is output as JSON, and the output JSON must adhere to the following format:
+{
+"related_fields": <Directly return a list of strings composed of all research fields>
+}

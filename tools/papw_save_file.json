@@ -1,0 +1,20 @@
+{
+  "name": "papw_save_file",
+  "description": "保存文本内容到文件",
+  "module": "utils.papw_tools",
+  "function": "papw_save_file",
+  "parameters": {
+    "type": "object",
+    "required": ["file_path", "content"],
+    "properties": {
+      "file_path": {
+        "type": "string",
+        "description": "文件绝对路径"
+      },
+      "content": {
+        "type": "string",
+        "description": "要保存的文本内容"
+      }
+    }
+  }
+}

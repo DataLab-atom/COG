@@ -1,0 +1,20 @@
+{
+  "name": "arch_verify_and_fix",
+  "description": "在沙盒中验证代码库是否能运行，失败时自动 LLM 修复并重试，最多三次",
+  "long_running": true,
+  "owned_by": "graphs/arch_verify_and_fix.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["output_dir"],
+    "properties": {
+      "output_dir": {"type": "string", "description": "项目根目录绝对路径"}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "ok":        {"type": "boolean", "description": "最终是否能成功运行"},
+      "needs_fix": {"type": "boolean", "description": "三次修复后仍需修复则为 true"}
+    }
+  }
+}

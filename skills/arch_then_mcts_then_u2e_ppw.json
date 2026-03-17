@@ -1,0 +1,70 @@
+{
+  "name": "arch_then_mcts_then_u2e_ppw",
+  "description": "端到端科学代码生成与论文写作全流程：需求描述 → 架构生成（人工审核）→ 代码生成 → MCTS Beam Search 优化 → U2E 进化优化 → papw 论文自动写作（文献下载 → 向量数据库 → 实验分析 → 四章节并行写作 → 合并输出 paper.tex）。支持两种启动方式：①LLM 生成架构（需 requirement + arch_gate_channel_id）；②从现有代码库解析架构（需 existing_project_root + existing_direction，指标从 requirement 自动提取）",
+  "long_running": true,
+  "owned_by": "graphs/arch_then_mcts_then_u2e_ppw.json",
+  "input_schema": {
+    "type": "object",
+    "required": [
+      "requirement", "output_dir", "arch_gate_channel_id", "mcts_gate_channel_id",
+      "sandbox_timeout", "beam_width", "consecutive_bad_limit", "max_generations",
+      "pop_size", "mutation_rate", "max_fe",
+      "tex_template_path", "text_model_name", "write_model_name"
+    ],
+    "properties": {
+      "requirement":           { "type": "string",  "description": "科学计算需求描述（自然语言）" },
+      "output_dir":            { "type": "string",  "description": "项目输出目录绝对路径（papw/ 子目录将在此创建）" },
+      "arch_gate_channel_id":  { "type": "string",  "description": "架构审核通道 ID" },
+      "mcts_gate_channel_id":  { "type": "string",  "description": "MCTS Human Gate 通道 ID" },
+      "sandbox_timeout":       { "type": "number",  "description": "单次沙盒运行超时秒数" },
+      "beam_width":            { "type": "integer", "description": "MCTS 并发 beam 宽度" },
+      "consecutive_bad_limit": { "type": "integer", "description": "MCTS 连续无改善自动回滚阈值" },
+      "max_generations":       { "type": "integer", "description": "MCTS 最大代数" },
+      "pop_size":              { "type": "integer", "description": "U2E 种群大小" },
+      "mutation_rate":         { "type": "number",  "description": "U2E 变异比例" },
+      "max_fe":                { "type": "integer", "description": "U2E 最大函数评估次数" },
+      "user_generator_prompt": { "type": "string",  "description": "U2E 用户自定义生成提示词（可选）", "default": "" },
+      "external_knowledge":    { "type": "string",  "description": "U2E 外部知识字符串（可选）", "default": "" },
+      "existing_project_root": { "type": "string",  "description": "【启动方式②】现有 Python 项目根目录绝对路径。非空时跳过 LLM 架构生成，直接 AST 解析", "default": "" },
+      "existing_direction":    { "type": "string",  "description": "【启动方式②】优化方向 'max' 或 'min'，启动方式②时必填", "default": "max" },
+      "enable_papw":           { "type": "boolean", "description": "是否启用 papw 论文写作分支（false 则跳过文献下载/向量数据库/论文写作全流程）", "default": false },
+      "tex_template_path":     { "type": "string",  "description": "LaTeX 模板文件绝对路径" },
+      "reference_bib_path":    { "type": "string",  "description": "用户提供的初始 .bib 文件路径（可为空串，空时由 Semantic Scholar 自动搜索）", "default": "" },
+      "expand_references":     { "type": "boolean", "description": "是否调用 Semantic Scholar 在 base_bib 基础上扩充文献", "default": true },
+      "s2_api_key":            { "type": "string",  "description": "Semantic Scholar API Key", "default": "" },
+      "text_model_name":       { "type": "string",  "description": "papw 分析/命名/信息整合模型名称" },
+      "write_model_name":      { "type": "string",  "description": "papw 章节写作模型名称" },
+      "embedding_model":       { "type": "string",  "description": "嵌入模型名称", "default": "BAAI/bge-m3" },
+      "embedding_model_source":{ "type": "string",  "description": "'local' 或 'api'", "default": "api" },
+      "reranker_path":         { "type": "string",  "description": "重排模型路径或名称", "default": "BAAI/bge-reranker-v2-m3" },
+      "reranker_model_source": { "type": "string",  "description": "'local' 或 'api'", "default": "api" },
+      "database_device":       { "type": "string",  "description": "向量数据库设备 'cpu' 或 'cuda:N'", "default": "cpu" },
+      "pdf_transform_mode":    { "type": "string",  "description": "PDF 解析模式 'local' 或 'api'", "default": "api" },
+      "all_paper_num":         { "type": "integer", "description": "目标参考文献总数", "default": 70 }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "arch_ok":            { "type": "boolean", "description": "架构生成是否成功" },
+      "arch_errors":        { "type": "array",   "description": "架构生成错误列表" },
+      "metric_name":        { "type": "string",  "description": "优化指标名称" },
+      "direction":          { "type": "string",  "description": "优化方向（max / min）" },
+      "baseline_score":     { "type": "number",  "description": "基线评估分数" },
+      "mcts_best_node":     { "type": "object",  "description": "MCTS 最优节点" },
+      "u2e_elitist":        { "type": "object",  "description": "U2E 全局精英个体" },
+      "u2e_best_obj":       { "type": "number",  "description": "U2E 最优目标值" },
+      "function_evals":     { "type": "integer", "description": "U2E 总函数评估次数" },
+      "method_code_path":   { "type": "string",  "description": "papw 代码目录路径（含 Ours.py / other/）" },
+      "bib_path":           { "type": "string",  "description": "合并后的 .bib 文件路径" },
+      "experiment_vb_path": { "type": "string",  "description": "实验分析 Chroma DB 路径" },
+      "full_text_vb_path":  { "type": "string",  "description": "全文 Chroma DB 路径" },
+      "perspectives":       { "type": "array",   "description": "已完成的实验分析角度目录名列表" },
+      "method_tex":         { "type": "string",  "description": "method.tex 路径" },
+      "related_work_tex":   { "type": "string",  "description": "related_work.tex 路径" },
+      "experiment_tex":     { "type": "string",  "description": "experiment.tex 路径" },
+      "introduction_tex":   { "type": "string",  "description": "introduction.tex 路径" },
+      "paper_tex":          { "type": "string",  "description": "最终合并论文 paper.tex 路径" }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "preset": "fast",
+  "description": "结合用户需求描述和项目架构树，从中提取优化目标指标名称",
+  "long_running": false,
+  "skills": [
+    "skills/arch_extract_metric.json"
+  ],
+  "agent_name": "arch_extract_metric",
+  "model": "gpt-4o-mini",
+  "system_prompt_path": "./prompts/arch_extract_metric/system.txt",
+  "user_prompt_path": "./prompts/arch_extract_metric/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "requirement",
+    "tree_json"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "metric_name"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "metric_name": {
+        "type": "string",
+        "minLength": 1,
+        "description": "最终确定的优化指标名称"
+      }
+    }
+  },
+  "params": {
+    "temperature": 0.0,
+    "max_tokens": 256
+  }
+}

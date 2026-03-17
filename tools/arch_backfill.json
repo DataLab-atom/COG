@@ -2,7 +2,7 @@
   "name": "arch_backfill",
   "description": "静态回填 file.imports.names、module.exports、module.dependencies 和 entrypoint",
   "long_running": false,
-  "module": "arch.backfill",
+  "module": "utils.arch.backfill",
   "function": "arch_backfill",
   "parameters": {
     "type": "object",

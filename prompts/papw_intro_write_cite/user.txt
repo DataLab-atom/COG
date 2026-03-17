@@ -1,0 +1,8 @@
+# The writing subtask you need to complete is:
+{{task_goal}}
+
+# The content of your thinking:
+{{think_content}}
+
+# References:
+{{references}}

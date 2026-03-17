@@ -1,0 +1,27 @@
+{
+  "preset": "default",
+  "description": "规划方法论章节的写作大纲，将写作任务分解为 think/write 子任务",
+  "long_running": false,
+  "skills": [
+    "skills/papw_method_writing.json"
+  ],
+  "agent_name": "papw_method_outline",
+  "system_prompt_path": "./prompts/papw_method_outline/system.txt",
+  "user_prompt_path": "./prompts/papw_method_outline/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "writing_requirement"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "outline"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "outline": {
+        "description": "写作大纲任务树"
+      }
+    }
+  }
+}

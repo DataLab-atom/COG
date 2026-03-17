@@ -1,3 +1,7 @@
+## 评估指标
+- 指标名：{{metric_name}}
+- main.py 中的评估入口函数必须在结束时打印：`print(f"__METRICS__:{json.dumps({'{{metric_name}}': <值>})}")`
+
 ## 函数定义
 id: {{fn_id}}
 description: {{description}}
@@ -27,5 +31,8 @@ is_init: {{is_init}}
 
 ## 参考代码（若有）
 {{reference_code}}
+
+## 项目中可用的数据文件
+{{data_files_json}}
 
 请实现该函数体，输出 JSON 对象。

@@ -1,0 +1,24 @@
+{
+  "name": "u2e_structured_reflector",
+  "description": "将本轮短期反思与历史结构化记忆融合，输出分三类（principles / failed_patterns / best_tricks）的结构化知识对象",
+  "long_running": false,
+  "owned_by": "configs/u2e_structured_reflector.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["problem_desc", "prior_memory", "new_reflections"],
+    "properties": {
+      "problem_desc":    { "type": "string", "description": "问题描述" },
+      "prior_memory":    { "type": ["object", "string"], "description": "上一代结构化记忆（dict 或序列化字符串），初始为空 dict" },
+      "new_reflections": { "type": "string", "description": "本轮所有短期反思拼合后的字符串" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["principles", "failed_patterns", "best_tricks"],
+    "properties": {
+      "principles":      { "type": "array", "items": { "type": "string" }, "description": "通用算法原则列表" },
+      "failed_patterns": { "type": "array", "items": { "type": "string" }, "description": "已证无效的模式列表" },
+      "best_tricks":     { "type": "array", "items": { "type": "string" }, "description": "带来实际提升的技巧列表" }
+    }
+  }
+}

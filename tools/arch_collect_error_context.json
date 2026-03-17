@@ -1,0 +1,17 @@
+{
+  "name": "arch_collect_error_context",
+  "description": "解析沙盒 stderr traceback，找出项目内失败的文件并读取内容，同时格式化完整错误信息供 LLM agent 使用",
+  "long_running": false,
+  "module": "utils.arch.runtime_fix",
+  "function": "arch_collect_error_context",
+  "parameters": {
+    "type": "object",
+    "required": ["stderr_log", "error", "output_log", "output_dir"],
+    "properties": {
+      "stderr_log":  {"type": "string", "description": "sandbox_run 返回的 stderr 完整内容"},
+      "error":       {"type": "string", "description": "sandbox_run 返回的 error 字段"},
+      "output_log":  {"type": "string", "description": "sandbox_run 返回的 stdout 内容"},
+      "output_dir":  {"type": "string", "description": "项目根目录绝对路径"}
+    }
+  }
+}

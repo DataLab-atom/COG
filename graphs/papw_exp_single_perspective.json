@@ -1,0 +1,230 @@
+{
+  "name": "papw_exp_single_perspective",
+  "description": "单个分析角度实验：规划 → 逐函数生成 patch → sandbox 执行 → 绘图（含重试）→ 多模态分析",
+  "long_running": true,
+  "variables": [
+    "project_root",
+    "perspective_base",
+    "p_name",
+    "arch_tree",
+    "best_patches",
+    "text_model_name"
+  ],
+  "steps": [
+    {
+      "id": "prep",
+      "type": "tool",
+      "ref": "tools/papw_exp_prep_perspective.json",
+      "inputs": {
+        "perspective_base": "$.perspective_base",
+        "p_name": "$.p_name"
+      }
+    },
+    {
+      "id": "plan_experiment",
+      "type": "agent",
+      "ref": "configs/papw_exp_plan_experiment.json",
+      "depends_on": ["prep"],
+      "inputs": {
+        "perspective_info": "prep.perspective_info",
+        "arch_tree": "$.arch_tree",
+        "best_patches": "$.best_patches"
+      }
+    },
+    {
+      "id": "gen_patches",
+      "type": "loop",
+      "depends_on": ["plan_experiment"],
+      "max_iterations": 20,
+      "while": "{{has_remaining}}",
+      "state": {
+        "remaining_changes": "plan_experiment.changes",
+        "patches_so_far": [],
+        "has_remaining": true
+      },
+      "body": [
+        {
+          "id": "get_next_change",
+          "type": "tool",
+          "ref": "tools/papw_exp_get_next_change.json",
+          "inputs": {
+            "remaining_changes": "$.remaining_changes"
+          }
+        },
+        {
+          "id": "gen_one_patch",
+          "type": "agent",
+          "ref": "configs/papw_exp_gen_one_patch.json",
+          "depends_on": ["get_next_change"],
+          "inputs": {
+            "current_change": "get_next_change.current_change",
+            "arch_tree": "$.arch_tree",
+            "best_patches": "$.best_patches",
+            "patches_so_far": "$.patches_so_far"
+          }
+        },
+        {
+          "id": "update_patches",
+          "type": "tool",
+          "ref": "tools/papw_exp_update_patches.json",
+          "depends_on": ["gen_one_patch"],
+          "inputs": {
+            "patches_so_far": "$.patches_so_far",
+            "new_patch": "gen_one_patch",
+            "remaining_changes": "get_next_change.remaining_changes"
+          }
+        }
+      ],
+      "state_update": {
+        "remaining_changes": "update_patches.remaining_changes",
+        "patches_so_far": "update_patches.patches_so_far",
+        "has_remaining": "update_patches.has_remaining"
+      }
+    },
+    {
+      "id": "merge_patches",
+      "type": "tool",
+      "ref": "tools/papw_exp_merge_patches.json",
+      "depends_on": ["gen_patches"],
+      "inputs": {
+        "best_patches": "$.best_patches",
+        "experiment_patches": "gen_patches.patches_so_far"
+      }
+    },
+    {
+      "id": "gen_draw_script",
+      "type": "agent",
+      "ref": "configs/papw_exp_gen_draw_script.json",
+      "depends_on": ["plan_experiment"],
+      "inputs": {
+        "charts": "plan_experiment.charts",
+        "data_to_collect": "plan_experiment.data_to_collect",
+        "perspective_info": "prep.perspective_info"
+      }
+    },
+    {
+      "id": "run_experiment",
+      "type": "input",
+      "ref": "input/sandbox_run.json",
+      "long_running": true,
+      "depends_on": ["merge_patches"],
+      "inputs": {
+        "project_root": "$.project_root",
+        "patches": "merge_patches.patches",
+        "persist_dir": "prep.sandbox_dir"
+      }
+    },
+    {
+      "id": "draw_loop",
+      "type": "loop",
+      "depends_on": ["run_experiment", "gen_draw_script"],
+      "max_iterations": 3,
+      "while": "{{should_continue}}",
+      "state": {
+        "draw_code": "gen_draw_script.draw_code",
+        "success": false,
+        "should_continue": true
+      },
+      "body": [
+        {
+          "id": "run_drawing",
+          "type": "input",
+          "ref": "input/papw_exp_run_script.json",
+          "inputs": {
+            "script_content": "$.draw_code",
+            "work_dir": "run_experiment.sandbox_dir",
+            "script_name": "draw.py",
+            "timeout": 120
+          }
+        },
+        {
+          "id": "check_draw",
+          "type": "tool",
+          "ref": "tools/papw_exp_check_draw.json",
+          "depends_on": ["run_drawing"],
+          "inputs": {
+            "success": "run_drawing.success",
+            "stderr": "run_drawing.stderr"
+          }
+        },
+        {
+          "id": "fix_draw",
+          "type": "cond",
+          "depends_on": ["check_draw"],
+          "condition": "{{check_draw.should_continue}}",
+          "if_true": {
+            "type": "agent",
+            "ref": "configs/papw_exp_fix_draw.json",
+            "inputs": {
+              "draw_code": "$.draw_code",
+              "stderr": "check_draw.stderr"
+            }
+          },
+          "if_false": {}
+        },
+        {
+          "id": "update_draw_state",
+          "type": "tool",
+          "ref": "tools/papw_exp_update_draw_state.json",
+          "depends_on": ["fix_draw", "check_draw"],
+          "inputs": {
+            "fix_result": "fix_draw",
+            "success": "check_draw.success",
+            "prev_draw_code": "$.draw_code"
+          }
+        }
+      ],
+      "state_update": {
+        "draw_code": "update_draw_state.draw_code",
+        "success": "update_draw_state.success",
+        "should_continue": "update_draw_state.should_continue"
+      }
+    },
+    {
+      "id": "collect_chart_paths",
+      "type": "tool",
+      "ref": "tools/papw_exp_collect_chart_paths.json",
+      "depends_on": ["draw_loop"],
+      "inputs": {
+        "charts_dir": "prep.charts_dir"
+      }
+    },
+    {
+      "id": "gen_analysis",
+      "type": "agent",
+      "ref": "configs/papw_exp_analysis.json",
+      "depends_on": ["run_experiment", "collect_chart_paths"],
+      "inputs": {
+        "perspective_info": "prep.perspective_info",
+        "metrics": "run_experiment.metrics",
+        "output_log": "run_experiment.output_log",
+        "image_paths": "collect_chart_paths.image_paths"
+      }
+    },
+    {
+      "id": "save_analysis",
+      "type": "tool",
+      "ref": "tools/papw_exp_save_analysis.json",
+      "depends_on": ["gen_analysis"],
+      "inputs": {
+        "results_dir": "prep.results_dir",
+        "experiment_analysis": "gen_analysis.experiment_analysis"
+      }
+    }
+  ],
+  "outputs": {
+    "p_name": "prep.p_name",
+    "success": "run_experiment.ok",
+    "sandbox_dir": "run_experiment.sandbox_dir",
+    "experiment_result": {
+      "p_name": "prep.p_name",
+      "perspective_info": "prep.perspective_info",
+      "experiment_patches": "gen_patches.patches_so_far",
+      "draw_code": "draw_loop.draw_code",
+      "metrics": "run_experiment.metrics",
+      "output_log": "run_experiment.output_log",
+      "chart_paths": "collect_chart_paths.image_paths",
+      "analysis": "gen_analysis.experiment_analysis"
+    }
+  }
+}

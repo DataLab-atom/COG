@@ -1,7 +1,10 @@
 Demand:
 {{demand}}
 
-Project tree:
+Codebase nodes (you MUST only choose node_a_name and node_b_name from this list):
+{{node_summary}}
+
+MCTS search tree:
 {{tree_text}}
 
 Optimization history:

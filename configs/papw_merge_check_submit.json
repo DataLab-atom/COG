@@ -1,0 +1,29 @@
+{
+  "preset": "strong",
+  "description": "论文提交前最终检查",
+  "long_running": false,
+  "skills": [
+    "skills/papw_merge_writing.json"
+  ],
+  "agent_name": "papw_merge_check_submit",
+  "system_prompt_path": "./prompts/papw_merge_check_submit/system.txt",
+  "user_prompt_path": "./prompts/papw_merge_check_submit/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "content"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "corrected_tex"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "corrected_tex": {
+        "type": "string",
+        "description": "最终修正的 LaTeX 内容"
+      }
+    }
+  },
+  "timeout": 180.0
+}

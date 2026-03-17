@@ -1,0 +1,35 @@
+{
+  "preset": "default",
+  "description": "引言写作子任务（需引用文献）",
+  "long_running": false,
+  "skills": [
+    "skills/papw_introduction_writing.json"
+  ],
+  "agent_name": "papw_intro_write_cite",
+  "system_prompt_path": "./prompts/papw_intro_write_cite/system.txt",
+  "user_prompt_path": "./prompts/papw_intro_write_cite/user.txt",
+  "system_variables": [
+    "all_write_task_plan",
+    "done_write",
+    "all_write_task",
+    "tex_template"
+  ],
+  "user_variables": [
+    "task_goal",
+    "think_content",
+    "references"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "tex_code"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "tex_code": {
+        "type": "string",
+        "description": "写作内容"
+      }
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "name": "mcts_update_state",
+  "description": "根据 Human Gate 决策更新全部 MCTS 状态变量（frontier、best_node、consecutive_bad 等）",
+  "long_running": false,
+  "module": "utils.mcts.tools",
+  "function": "mcts_update_state",
+  "parameters": {
+    "type": "object",
+    "required": [
+      "action", "next_mode", "selected_ids",
+      "new_nodes", "all_nodes", "frontier", "best_node",
+      "consecutive_bad", "generation", "history",
+      "global_tried", "baseline_log",
+      "beam_width", "consecutive_bad_limit"
+    ],
+    "properties": {
+      "action": {
+        "type": "string",
+        "description": "Human Gate 决策：continue | select | rollback | architecture | stop"
+      },
+      "next_mode": {
+        "type": "string",
+        "description": "下一代搜索模式：llm | enumerate"
+      },
+      "selected_ids": {
+        "type": "array",
+        "description": "action=select 时用户选定的节点 ID 列表"
+      },
+      "new_nodes": {
+        "type": "array",
+        "description": "本代新建的子节点列表"
+      },
+      "all_nodes": {
+        "type": "object",
+        "description": "全量节点注册表"
+      },
+      "frontier": {
+        "type": "array",
+        "description": "本代扩展前的 frontier（用于 rollback）"
+      },
+      "best_node": {
+        "type": "object",
+        "description": "当前全局最优节点"
+      },
+      "consecutive_bad": {
+        "type": "integer",
+        "description": "连续无改善代数计数器"
+      },
+      "generation": {
+        "type": "integer",
+        "description": "当前代数"
+      },
+      "history": {
+        "type": "array",
+        "description": "历史记录列表"
+      },
+      "global_tried": {
+        "type": "array",
+        "description": "全局已尝试的 [op, angle] 组合列表"
+      },
+      "baseline_log": {
+        "type": "string",
+        "description": "当前最优节点的运行日志（用于更新 Critic 上下文）"
+      },
+      "beam_width": {
+        "type": "integer",
+        "description": "Beam 宽度（保留前 K 个节点）"
+      },
+      "consecutive_bad_limit": {
+        "type": "integer",
+        "description": "连续无改善上限，超过后自动回滚"
+      }
+    }
+  }
+}

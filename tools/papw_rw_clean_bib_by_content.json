@@ -1,0 +1,14 @@
+{
+  "name": "papw_rw_clean_bib_by_content",
+  "description": "根据 tex 内容清理未引用的 bib 条目",
+  "module": "utils.papw_tools",
+  "function": "papw_rw_clean_bib_by_content",
+  "parameters": {
+    "type": "object",
+    "required": ["all_bib_content", "tex_content"],
+    "properties": {
+      "all_bib_content": { "type": "string", "description": "全部 bib 内容" },
+      "tex_content": { "type": "string", "description": "tex 正文内容" }
+    }
+  }
+}

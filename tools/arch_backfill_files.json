@@ -2,7 +2,7 @@
   "name": "arch_backfill_files",
   "description": "将 map 步骤逐模块文件列表回填到模块，设置 kind: \"file\"，汇总为全量文件列表",
   "long_running": false,
-  "module": "arch.backfill_files",
+  "module": "utils.arch.backfill_map",
   "function": "arch_backfill_files",
   "parameters": {
     "type": "object",

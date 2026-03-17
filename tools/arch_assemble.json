@@ -2,7 +2,7 @@
   "name": "arch_assemble",
   "description": "将函数体填入代码骨架，创建目录结构，写入磁盘，返回生成的文件列表",
   "long_running": false,
-  "module": "arch.assemble",
+  "module": "utils.arch.assemble",
   "function": "arch_assemble",
   "parameters": {
     "type": "object",
@@ -28,6 +28,10 @@
       "output_dir": {
         "type": "string",
         "description": "项目输出根目录"
+      },
+      "file_imports": {
+        "type": "object",
+        "description": "{file_id: [import_stmt, ...]} fn_codegen_fanout 收集的外部库 import，可选"
       }
     }
   }

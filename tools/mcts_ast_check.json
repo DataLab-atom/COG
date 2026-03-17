@@ -1,8 +1,8 @@
 {
   "name": "mcts_ast_check",
-  "description": "对 LLM 生成的代码执行 AST 语法检查，通过则返回完整 patch 对象，失败则丢弃（不计惩罚）",
+  "description": "对 LLM 生成的代码执行 AST 语法检查，通过则返回含 action 字段的完整 patch 对象，失败则丢弃（不计惩罚）",
   "long_running": false,
-  "module": "mcts.tools",
+  "module": "utils.mcts.tools",
   "function": "mcts_ast_check",
   "parameters": {
     "type": "object",
@@ -27,7 +27,12 @@
       },
       "target_name": {
         "type": "string",
-        "description": "要替换的函数名或类名"
+        "description": "要替换或新建的函数名或类名"
+      },
+      "action": {
+        "type": "string",
+        "description": "rewrite（替换已有节点）或 create（追加新节点），默认 rewrite",
+        "default": "rewrite"
       }
     }
   }

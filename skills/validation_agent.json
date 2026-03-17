@@ -1,34 +1,30 @@
 {
   "name": "validation_agent",
-  "description": "从自然语言需求中解析优化目标，输出结构化 metric_spec（指标名、优化方向）和可执行的 metric_fn.py 代码",
+  "description": "从自然语言需求描述中解析优化目标，输出结构化 metric_spec（metric_name + direction）",
   "long_running": false,
-  "owned_by": "graphs/arch_build.json",
+  "owned_by": "configs/validation_agent.json",
   "input_schema": {
     "type": "object",
     "required": ["requirement"],
     "properties": {
       "requirement": {
         "type": "string",
-        "description": "自然语言需求描述，包含任务说明、数据集描述、评估指标描述"
+        "description": "自然语言描述的项目需求，包含优化目标信息"
       }
     }
   },
   "output_schema": {
     "type": "object",
-    "required": ["metric_name", "direction", "metric_fn_code"],
+    "required": ["metric_name", "direction"],
     "properties": {
       "metric_name": {
         "type": "string",
-        "description": "标准化指标名称，例如 nmse、per_class_accuracy"
+        "description": "标准化指标名称，小写下划线，例如 nmse、per_class_accuracy"
       },
       "direction": {
         "type": "string",
         "enum": ["minimize", "maximize"],
-        "description": "优化方向"
-      },
-      "metric_fn_code": {
-        "type": "string",
-        "description": "完整的 metric_fn.py 文件内容，包含 compute_metrics 函数"
+        "description": "优化方向：minimize 表示越小越好，maximize 表示越大越好"
       }
     }
   }

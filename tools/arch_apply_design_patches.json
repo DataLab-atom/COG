@@ -1,0 +1,21 @@
+{
+  "name": "arch_apply_design_patches",
+  "description": "将 arch_feedback_classifier 生成的设计级 patch 链顺序应用到架构树，支持增删改模块/文件/函数节点及调用关系",
+  "long_running": false,
+  "module": "utils.arch.design_patch",
+  "function": "arch_apply_design_patches",
+  "parameters": {
+    "type": "object",
+    "required": ["tree", "patch_chain"],
+    "properties": {
+      "tree": {
+        "type": "array",
+        "description": "原始架构树（list[dict]，与 arch_build 输出格式一致）"
+      },
+      "patch_chain": {
+        "type": "array",
+        "description": "设计级 patch 列表，每项格式：{op, target_id, target_file?, depends_on?, data?}"
+      }
+    }
+  }
+}

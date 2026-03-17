@@ -51,7 +51,7 @@ needs.depth 表示该依赖的递归层数（1–3），由你自行评估填写
   "functions": [
     {
       "id": "fn::<name>",
-      "description": "<职责描述>",
+      "description": "<职责描述，不超过 300 字符>",
       "is_async": <bool>,
       "is_init": <bool>,
       "params": [{"name": "<name>", "type": "<type>"}],

@@ -2,7 +2,7 @@
   "name": "arch_backfill_leaves",
   "description": "将 map 步骤逐文件叶子结果回填到文件，设置 kind，汇总为全量类型/函数列表",
   "long_running": false,
-  "module": "arch.backfill_leaves",
+  "module": "utils.arch.backfill_map",
   "function": "arch_backfill_leaves",
   "parameters": {
     "type": "object",

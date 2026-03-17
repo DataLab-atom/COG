@@ -1,0 +1,48 @@
+{
+  "preset": "fast",
+  "description": "批量为无 docstring 的函数/类生成语义描述，输入为 arch_extract_undescribed 提取的待补全列表",
+  "long_running": false,
+  "skills": [
+    "skills/arch_enrich_descriptions.json"
+  ],
+  "agent_name": "arch_enrich_descriptions",
+  "model": "gpt-4o-mini",
+  "system_prompt_path": "./prompts/arch_enrich_descriptions/system.txt",
+  "user_prompt_path": "./prompts/arch_enrich_descriptions/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "undescribed_json"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "descriptions"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "descriptions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "fn_id",
+            "description"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "fn_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          }
+        }
+      }
+    }
+  },
+  "timeout": 120.0
+}

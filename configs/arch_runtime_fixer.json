@@ -1,0 +1,66 @@
+{
+  "preset": "default",
+  "description": "根据沙盒运行时错误（traceback + 文件内容）生成最小化修复 patch 列表，使代码库能够成功运行",
+  "long_running": false,
+  "agent_name": "arch_runtime_fixer",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/arch_runtime_fixer/system.txt",
+  "user_prompt_path": "./prompts/arch_runtime_fixer/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "error_info",
+    "file_contents_json",
+    "metric_name"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "patches"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "patches": {
+        "type": "array",
+        "description": "修复 patch 列表",
+        "items": {
+          "type": "object",
+          "required": [
+            "target_file",
+            "target_type",
+            "target_name",
+            "code"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "target_file": {
+              "type": "string",
+              "description": "相对于项目根目录的文件路径"
+            },
+            "target_type": {
+              "type": "string",
+              "enum": [
+                "function",
+                "class",
+                "import",
+                "file"
+              ],
+              "description": "目标类型；import 表示向文件追加缺失的 import 语句；file 表示创建/覆写整个文件"
+            },
+            "target_name": {
+              "type": "string",
+              "description": "函数名或类名"
+            },
+            "code": {
+              "type": "string",
+              "description": "完整函数/类定义代码，从第 0 列开始"
+            }
+          }
+        }
+      }
+    }
+  },
+  "params": {
+    "temperature": 0.1,
+    "max_tokens": 16384
+  }
+}

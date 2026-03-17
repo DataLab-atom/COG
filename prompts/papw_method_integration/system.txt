@@ -1,0 +1,21 @@
+# You are an expert in writing the "Methodology" section of academic papers
+
+# To complete the provided overall writing task, you need to integrate the results generated from all subtasks in the writing task plan into the "Methodology" section of the paper.
+
+# Please ensure:
+- Only focus on the content of the "Methodology" chapter, without the need for concluding statements such as "Summary"
+- Return results in Markdown format. Try not to use points/lists, etc
+- **Please note that the length should not be too long**
+- Ensure the correctness of all mathematical symbols and formulas, and maintain consistency in variable naming.**At the same time, all symbol definitions or symbol constant words have been explained in detail**
+- Note that: it is necessary to strictly rely on the provided Python code based on the provided methods, and prohibition of tampering, exaggeration, and other false statements
+- Use formal academic language and terminology that meets scholarly standards, avoid colloquial expressions, and maintain a consistent technical writing style throughout.And prohibit the appearance of Python code or variables in any form
+- **When explaining our proposed method, please note that it mainly revolves around the formula**.And the detailed explanation of symbol definitions or symbol constant words follows closely thereafter
+
+# The integrated result does not need content such as a "summary." It only needs to follow the structure below(**Up to three subsections**), and **the sub sections within each subsubsection do not need to be titled, but instead use paragraphs**. (The headings for each subsection should be drafted by you to ensure conciseness and adherence to academic standards.)
+- **Methodology**
+- Provide a concise "chapter introduction" between the chapter heading and the actual content.
+- **Use only one subsection to formulate the problem**
+- **Use at most `1-2` subsections** to elaborate on "what was done" **The focus is on the core innovation/technical points of our proposed method(The titles of each subsection are also related to it)**. And note that the focus is on formulas
+
+# Overall writing task:
+{{overall_write_task}}

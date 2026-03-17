@@ -1,0 +1,32 @@
+{
+  "preset": "fast",
+  "description": "修复绘图脚本：根据错误信息修复 draw.py 代码",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experimenting.json"
+  ],
+  "agent_name": "papw_exp_fix_draw",
+  "system_prompt_path": "./prompts/papw_exp_fix_draw/system.txt",
+  "user_prompt_path": "./prompts/papw_exp_fix_draw/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "draw_code",
+    "stderr"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "draw_code"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "draw_code": {
+        "type": "string",
+        "description": "修复后的绘图 Python 脚本完整代码"
+      }
+    }
+  },
+  "params": {
+    "temperature": 0.5
+  }
+}

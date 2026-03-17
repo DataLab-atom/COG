@@ -1,0 +1,62 @@
+{
+  "name": "mcts_build_fanout",
+  "description": "为每个 frontier 节点生成待评估任务列表，每个任务包含一次 mcts_single_combo 调用所需的全部参数（含 sandbox_in_ch 通道 ID）",
+  "long_running": false,
+  "module": "utils.mcts.tools",
+  "function": "mcts_build_fanout",
+  "parameters": {
+    "type": "object",
+    "required": [
+      "frontier", "global_tried", "beam_width",
+      "demand", "tree_text", "history_prompt",
+      "baseline_log", "project_root", "sandbox_timeout", "tree"
+    ],
+    "properties": {
+      "frontier": {
+        "type": "array",
+        "description": "当前 frontier 节点列表"
+      },
+      "global_tried": {
+        "type": "array",
+        "description": "全局已尝试的 op 列表（跨所有 frontier 节点的已用算子）"
+      },
+      "beam_width": {
+        "type": "integer",
+        "description": "每个节点最多展开的组合数"
+      },
+      "demand": {
+        "type": "string",
+        "description": "优化需求描述"
+      },
+      "tree_text": {
+        "type": "string",
+        "description": "搜索树状态文本（传递给 Critic）"
+      },
+      "history_prompt": {
+        "type": "string",
+        "description": "历史搜索记录文本（传递给 Critic）"
+      },
+      "baseline_log": {
+        "type": "string",
+        "description": "当前最优节点的 main.py 输出（传递给 Critic）"
+      },
+      "project_root": {
+        "type": "string",
+        "description": "项目根目录绝对路径"
+      },
+      "sandbox_timeout": {
+        "type": "number",
+        "description": "沙盒执行超时秒数"
+      },
+      "tree": {
+        "type": "array",
+        "description": "含 code 字段的架构树，透传给每个 mcts_single_combo 任务"
+      },
+      "sandbox_in_ch": {
+        "type": "string",
+        "description": "共享沙箱会话输入通道 ID，透传给每个 mcts_single_combo 任务；为空字符串时任务使用独立 sandbox_eval_once 评估",
+        "default": ""
+      }
+    }
+  }
+}

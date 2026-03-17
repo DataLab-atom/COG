@@ -1,0 +1,165 @@
+{
+  "preset": "fast",
+  "description": "根据单个计划项和当前树上下文，生成一个完整的架构设计 patch",
+  "long_running": false,
+  "agent_name": "arch_augment_gen_patch",
+  "model": "openai/gpt-5-mini",
+  "system_prompt_path": "./prompts/arch_augment_gen_patch/system.txt",
+  "user_prompt_path": "./prompts/arch_augment_gen_patch/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "metric_name",
+    "current_item_json",
+    "tree_json",
+    "patches_so_far_json"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "op",
+      "target_id",
+      "target_file",
+      "depends_on",
+      "data"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "op": {
+        "type": "string",
+        "enum": [
+          "add_fn",
+          "add_file",
+          "modify_fn"
+        ]
+      },
+      "target_id": {
+        "type": "string"
+      },
+      "target_file": {
+        "type": "string"
+      },
+      "depends_on": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "data": {
+        "type": "object",
+        "required": [
+          "description",
+          "path",
+          "module_id",
+          "is_async",
+          "calls",
+          "params",
+          "returns"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "module_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_async": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "calls": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "params": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "type"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "returns": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "params": {
+    "temperature": 0.1
+  }
+}

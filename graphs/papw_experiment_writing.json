@@ -1,0 +1,222 @@
+{
+  "name": "papw_experiment_writing",
+  "description": "实验章节写作子图：收集实验结果 → 规划大纲 → 递归执行子任务（think/write）→ 整合 → 优化 → 生成 LaTeX → 排版",
+  "long_running": true,
+  "skills": ["skills/papw_experiment_writing.json"],
+  "variables": [
+    "papw_root",
+    "arch_tree",
+    "best_patches",
+    "experiment_results",
+    "tex_template_path",
+    "write_model_name",
+    "integration_model_name",
+    "improve_round"
+  ],
+  "steps": [
+    {
+      "id": "paths",
+      "type": "tool",
+      "ref": "tools/papw_experiment_writing_paths.json",
+      "inputs": {
+        "papw_root": "$.papw_root"
+      }
+    },
+    {
+      "id": "build_req",
+      "type": "tool",
+      "ref": "tools/papw_experiment_build_req.json",
+      "depends_on": ["paths"],
+      "inputs": {
+        "arch_tree": "$.arch_tree",
+        "best_patches": "$.best_patches",
+        "research_information_path": "paths.research_information_path",
+        "experiment_results": "$.experiment_results"
+      }
+    },
+    {
+      "id": "outline",
+      "type": "agent",
+      "ref": "configs/papw_experiment_outline.json",
+      "depends_on": ["build_req"],
+      "inputs": {
+        "writing_requirement": "build_req.writing_requirement"
+      }
+    },
+    {
+      "id": "normalize",
+      "type": "tool",
+      "ref": "tools/papw_normalize_outline.json",
+      "depends_on": ["outline"],
+      "inputs": {
+        "outline": "outline.outline"
+      }
+    },
+    {
+      "id": "read_template",
+      "type": "tool",
+      "ref": "tools/papw_read_file.json",
+      "inputs": {
+        "file_path": "$.tex_template_path"
+      }
+    },
+    {
+      "id": "execute_tasks",
+      "type": "loop",
+      "depends_on": ["normalize"],
+      "max_iterations": 50,
+      "while": "{{has_more_tasks}}",
+      "state": {
+        "tasks": "normalize.leaf_tasks",
+        "task_index": 0,
+        "done_write": "",
+        "related_think": "",
+        "has_more_tasks": true,
+        "all_write_task": "build_req.writing_requirement",
+        "all_write_task_plan": "normalize.task_plan_text"
+      },
+      "body": [
+        {
+          "id": "current",
+          "type": "tool",
+          "ref": "tools/papw_get_loop_task.json",
+          "inputs": {
+            "tasks": "$.tasks",
+            "index": "$.task_index"
+          }
+        },
+        {
+          "id": "dispatch",
+          "type": "cond",
+          "depends_on": ["current"],
+          "on": "current.task_type",
+          "branches": {
+            "think": {
+              "type": "agent",
+              "ref": "configs/papw_experiment_think.json",
+              "inputs": {
+                "all_write_task": "$.all_write_task",
+                "all_write_task_plan": "$.all_write_task_plan",
+                "related_think": "$.related_think",
+                "done_write": "$.done_write",
+                "task_goal": "current.task_goal"
+              }
+            },
+            "write": {
+              "type": "agent",
+              "ref": "configs/papw_experiment_write.json",
+              "inputs": {
+                "all_write_task": "$.all_write_task",
+                "all_write_task_plan": "$.all_write_task_plan",
+                "related_think": "$.related_think",
+                "done_write": "$.done_write",
+                "task_goal": "current.task_goal"
+              }
+            }
+          }
+        },
+        {
+          "id": "update",
+          "type": "tool",
+          "ref": "tools/papw_update_task_state.json",
+          "depends_on": ["dispatch"],
+          "inputs": {
+            "task_type": "current.task_type",
+            "dispatch_result": "dispatch",
+            "current_done_write": "$.done_write",
+            "current_related_think": "$.related_think",
+            "task_index": "$.task_index",
+            "total_tasks": "current.total_tasks"
+          }
+        }
+      ],
+      "state_update": {
+        "done_write": "update.done_write",
+        "related_think": "update.related_think",
+        "task_index": "update.next_index",
+        "has_more_tasks": "update.has_more_tasks"
+      }
+    },
+    {
+      "id": "integration",
+      "type": "agent",
+      "ref": "configs/papw_experiment_integration.json",
+      "depends_on": ["execute_tasks"],
+      "inputs": {
+        "overall_write_task": "build_req.writing_requirement",
+        "done_write": "execute_tasks.done_write"
+      }
+    },
+    {
+      "id": "improve_loop",
+      "type": "loop",
+      "depends_on": ["integration"],
+      "max_iterations": 5,
+      "while": "{{should_continue}}",
+      "state": {
+        "content": "integration.integration_result",
+        "should_continue": true,
+        "overall_write_task": "build_req.writing_requirement"
+      },
+      "body": [
+        {
+          "id": "improve",
+          "type": "agent",
+          "ref": "configs/papw_experiment_improve.json",
+          "inputs": {
+            "overall_write_task": "$.overall_write_task",
+            "content": "$.content"
+          }
+        },
+        {
+          "id": "check",
+          "type": "tool",
+          "ref": "tools/papw_check_improve_done.json",
+          "depends_on": ["improve"],
+          "inputs": {
+            "improve_result": "improve.experiment_improve_content",
+            "previous_content": "$.content"
+          }
+        }
+      ],
+      "state_update": {
+        "content": "check.content",
+        "should_continue": "check.should_continue"
+      }
+    },
+    {
+      "id": "generate_tex",
+      "type": "agent",
+      "ref": "configs/papw_experiment_generate_tex.json",
+      "depends_on": ["improve_loop", "read_template"],
+      "inputs": {
+        "tex_template": "read_template.content",
+        "content": "improve_loop.content"
+      }
+    },
+    {
+      "id": "typeset",
+      "type": "agent",
+      "ref": "configs/papw_experiment_typeset.json",
+      "depends_on": ["generate_tex"],
+      "inputs": {
+        "tex_template": "read_template.content",
+        "tex_code": "generate_tex.tex_code"
+      }
+    },
+    {
+      "id": "save_result",
+      "type": "tool",
+      "ref": "tools/papw_save_file.json",
+      "depends_on": ["typeset"],
+      "inputs": {
+        "file_path": "paths.result_write_path",
+        "content": "typeset.tex_code"
+      }
+    }
+  ],
+  "outputs": {
+    "tex_path": "save_result.file_path",
+    "tex_code": "typeset.tex_code"
+  }
+}

@@ -1,0 +1,243 @@
+{
+  "name": "papw_full",
+  "description": "论文写作全流程子图：papw_init → 文献下载 → 向量数据库 → 实验分析 → 四章节并行写作 → 合并输出 paper.tex",
+  "long_running": true,
+  "variables": [
+    "output_dir",
+    "requirement",
+    "project_tree",
+    "metric_name",
+    "elitist_patches",
+    "mcts_best_patches",
+    "tex_template_path",
+    "reference_bib_path",
+    "expand_references",
+    "s2_api_key",
+    "text_model_name",
+    "write_model_name",
+    "embedding_model",
+    "embedding_model_source",
+    "reranker_path",
+    "reranker_model_source",
+    "database_device",
+    "pdf_transform_mode",
+    "pdf_md_token",
+    "all_paper_num",
+    "unpaywall_email"
+  ],
+  "steps": [
+    {
+      "id": "papw_init",
+      "type": "tool",
+      "ref": "tools/papw_init.json",
+      "inputs": {
+        "output_dir": "$.output_dir"
+      }
+    },
+    {
+      "id": "build_method_explain",
+      "type": "tool",
+      "ref": "tools/papw_build_method_explain.json",
+      "inputs": {
+        "tree": "$.project_tree",
+        "elitist_patches?": "$.elitist_patches",
+        "requirement": "$.requirement",
+        "metric_name": "$.metric_name",
+        "output_dir": "$.output_dir"
+      }
+    },
+    {
+      "id": "build_references",
+      "type": "input",
+      "ref": "input/papw_build_references.json",
+      "long_running": true,
+      "depends_on": [
+        "papw_init"
+      ],
+      "inputs": {
+        "papw_root": "papw_init.papw_root",
+        "requirement": "$.requirement",
+        "s2_query": "$.metric_name",
+        "base_bib_path": "$.reference_bib_path",
+        "expand_references": "$.expand_references",
+        "s2_api_key": "$.s2_api_key",
+        "all_paper_num": "$.all_paper_num",
+        "unpaywall_email": "$.unpaywall_email"
+      }
+    },
+    {
+      "id": "build_database",
+      "type": "input",
+      "ref": "input/papw_build_database.json",
+      "long_running": true,
+      "depends_on": [
+        "build_references"
+      ],
+      "inputs": {
+        "papw_root": "papw_init.papw_root",
+        "bib_path": "build_references.bib_path",
+        "embedding_model": "$.embedding_model",
+        "embedding_model_source": "$.embedding_model_source",
+        "pdf_transform_mode": "$.pdf_transform_mode",
+        "pdf_md_token": "$.pdf_md_token",
+        "database_device": "$.database_device",
+        "s2_api_key": "$.s2_api_key",
+        "all_paper_num": "$.all_paper_num",
+        "unpaywall_email": "$.unpaywall_email"
+      }
+    },
+    {
+      "id": "experimenting",
+      "type": "graph",
+      "ref": "graphs/papw_experimenting.json",
+      "long_running": true,
+      "depends_on": [
+        "build_method_explain",
+        "build_database"
+      ],
+      "inputs": {
+        "papw_root": "build_method_explain.papw_root",
+        "bib_path": "build_references.bib_path",
+        "experiment_vb_path": "build_database.experiment_vb_path",
+        "md_dir": "build_database.md_dir",
+        "project_root": "$.output_dir",
+        "arch_tree": "$.project_tree",
+        "best_patches?": "$.mcts_best_patches",
+        "text_model_name": "$.text_model_name",
+        "embedding_model": "$.embedding_model",
+        "embedding_model_source": "$.embedding_model_source",
+        "reranker_path": "$.reranker_path",
+        "reranker_model_source": "$.reranker_model_source",
+        "database_device": "$.database_device"
+      }
+    },
+    {
+      "id": "method_writing",
+      "type": "graph",
+      "ref": "graphs/papw_method_writing.json",
+      "long_running": true,
+      "depends_on": [
+        "build_method_explain"
+      ],
+      "inputs": {
+        "papw_root": "build_method_explain.papw_root",
+        "arch_tree": "$.project_tree",
+        "best_patches?": "$.mcts_best_patches",
+        "tex_template_path": "$.tex_template_path",
+        "write_model_name": "$.write_model_name",
+        "integration_model_name": "$.write_model_name",
+        "improve_round": 2
+      }
+    },
+    {
+      "id": "related_work_writing",
+      "type": "graph",
+      "ref": "graphs/papw_related_work_writing.json",
+      "long_running": true,
+      "depends_on": [
+        "build_method_explain",
+        "build_database"
+      ],
+      "inputs": {
+        "papw_root": "build_method_explain.papw_root",
+        "arch_tree": "$.project_tree",
+        "best_patches?": "$.mcts_best_patches",
+        "full_text_vb_path": "build_database.full_text_vb_path",
+        "tex_template_path": "$.tex_template_path",
+        "text_model_name": "$.text_model_name",
+        "embedding_model": "$.embedding_model",
+        "embedding_model_source": "$.embedding_model_source",
+        "reranker_path": "$.reranker_path",
+        "reranker_model_source": "$.reranker_model_source",
+        "database_device": "$.database_device",
+        "field_num": 3,
+        "sentence_num": 2,
+        "used_cite_num": 3,
+        "used_data_num": 3
+      }
+    },
+    {
+      "id": "experiment_writing",
+      "type": "graph",
+      "ref": "graphs/papw_experiment_writing.json",
+      "long_running": true,
+      "depends_on": [
+        "build_method_explain",
+        "experimenting"
+      ],
+      "inputs": {
+        "papw_root": "build_method_explain.papw_root",
+        "arch_tree": "$.project_tree",
+        "best_patches?": "$.mcts_best_patches",
+        "experiment_results": "experimenting.experiment_results",
+        "tex_template_path": "$.tex_template_path",
+        "write_model_name": "$.write_model_name",
+        "integration_model_name": "$.write_model_name",
+        "improve_round": 2
+      }
+    },
+    {
+      "id": "introduction_writing",
+      "type": "graph",
+      "ref": "graphs/papw_introduction_writing.json",
+      "long_running": true,
+      "depends_on": [
+        "method_writing",
+        "related_work_writing",
+        "experiment_writing",
+        "build_database"
+      ],
+      "inputs": {
+        "papw_root": "build_method_explain.papw_root",
+        "arch_tree": "$.project_tree",
+        "best_patches?": "$.mcts_best_patches",
+        "full_text_vb_path": "build_database.full_text_vb_path",
+        "related_work_bib_list_path": "related_work_writing.bib_result_list_path",
+        "tex_template_path": "$.tex_template_path",
+        "text_model_name": "$.text_model_name",
+        "integration_model_name": "$.write_model_name",
+        "embedding_model": "$.embedding_model",
+        "embedding_model_source": "$.embedding_model_source",
+        "reranker_path": "$.reranker_path",
+        "reranker_model_source": "$.reranker_model_source",
+        "database_device": "$.database_device"
+      }
+    },
+    {
+      "id": "merge_writing",
+      "type": "graph",
+      "ref": "graphs/papw_merge_writing.json",
+      "long_running": true,
+      "depends_on": [
+        "method_writing",
+        "related_work_writing",
+        "experiment_writing",
+        "introduction_writing"
+      ],
+      "inputs": {
+        "papw_root": "build_method_explain.papw_root",
+        "method_tex_path": "method_writing.tex_path",
+        "related_work_tex_path": "related_work_writing.tex_path",
+        "experiment_tex_path": "experiment_writing.tex_path",
+        "introduction_tex_path": "introduction_writing.tex_path",
+        "related_work_bib_path": "related_work_writing.bib_result_path",
+        "introduction_bib_path": "introduction_writing.bib_result_path",
+        "tex_template_path": "$.tex_template_path",
+        "write_model_name": "$.write_model_name",
+        "improve_round": 2,
+        "check_round": 1
+      }
+    }
+  ],
+  "outputs": {
+    "bib_path": "build_references.bib_path",
+    "experiment_vb_path": "build_database.experiment_vb_path",
+    "full_text_vb_path": "build_database.full_text_vb_path",
+    "perspectives": "experimenting.perspectives",
+    "method_tex": "method_writing.tex_path",
+    "related_work_tex": "related_work_writing.tex_path",
+    "experiment_tex": "experiment_writing.tex_path",
+    "introduction_tex": "introduction_writing.tex_path",
+    "paper_tex": "merge_writing.paper_tex_path"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "arch_codegen_single",
+  "description": "单函数体生成子图：从任务上下文和运行时依赖输出中准备变量，调用 arch_codegen agent 生成函数体",
+  "long_running": false,
+  "owned_by": "graphs/arch_codegen_single.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["task", "_deps", "metric_name"],
+    "properties": {
+      "task":        { "type": "object", "description": "arch_build_codegen_tasks 产出的单个任务" },
+      "_deps":       { "type": "object", "description": "依赖函数的输出字典 {fn_id: {body, imports}}" },
+      "metric_name": { "type": "string", "description": "评估指标名" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "body":    { "type": "string", "description": "生成的函数体代码" },
+      "imports": { "type": "array",  "items": { "type": "string" }, "description": "所需 import 语句列表" }
+    }
+  }
+}

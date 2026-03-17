@@ -1,0 +1,14 @@
+{
+  "name": "papw_exp_merge_patches",
+  "description": "合并 best_patches 和实验生成的 patches 为完整的 patch 列表",
+  "module": "utils.papw_tools",
+  "function": "papw_exp_merge_patches",
+  "parameters": {
+    "type": "object",
+    "required": ["best_patches", "experiment_patches"],
+    "properties": {
+      "best_patches": { "type": "array", "description": "上游最优 patch 链" },
+      "experiment_patches": { "type": "array", "description": "实验生成的 patch 列表" }
+    }
+  }
+}

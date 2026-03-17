@@ -1,0 +1,21 @@
+{
+  "name": "u2e_short_term_reflector",
+  "description": "对比 worse/better 两段代码，输出启发式设计提示（≤20 词）",
+  "long_running": false,
+  "owned_by": "configs/u2e_short_term_reflector.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["func_name", "problem_desc", "func_desc", "worse_code", "better_code"],
+    "properties": {
+      "func_name":    { "type": "string", "description": "被对比的函数名" },
+      "problem_desc": { "type": "string", "description": "问题描述" },
+      "func_desc":    { "type": "string", "description": "函数用途描述" },
+      "worse_code":   { "type": "string", "description": "较差的函数实现" },
+      "better_code":  { "type": "string", "description": "较好的函数实现" }
+    }
+  },
+  "output_schema": {
+    "type": "string",
+    "description": "不超过 20 词的启发式设计提示文本"
+  }
+}

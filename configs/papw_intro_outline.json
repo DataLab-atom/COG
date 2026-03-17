@@ -1,0 +1,27 @@
+{
+  "preset": "default",
+  "description": "规划引言章节写作大纲",
+  "long_running": false,
+  "skills": [
+    "skills/papw_introduction_writing.json"
+  ],
+  "agent_name": "papw_intro_outline",
+  "system_prompt_path": "./prompts/papw_intro_outline/system.txt",
+  "user_prompt_path": "./prompts/papw_intro_outline/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "writing_requirement"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "outline"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "outline": {
+        "description": "写作大纲任务树"
+      }
+    }
+  }
+}

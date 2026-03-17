@@ -2,7 +2,7 @@
   "name": "arch_validate_dag",
   "description": "对 module imports、file imports、fn calls 进行有向图环检测",
   "long_running": false,
-  "module": "arch.validate_dag",
+  "module": "utils.arch.arch_validate",
   "function": "arch_validate_dag",
   "parameters": {
     "type": "object",

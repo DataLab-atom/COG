@@ -1,12 +1,14 @@
 {
   "name": "mcts_single_combo",
-  "description": "MCTS 单个 (op, angle) 组合的完整评估：Critic 提出优化方向 → Engineer 生成代码 → AST 静态检查 → 沙盒评估",
+  "description": "MCTS 单个 op 算子的完整评估：Critic 提出优化方向 → 拆解原子任务 → 并行 Engineer+AST → 收集 patch → 通过共享沙箱会话评估",
   "long_running": true,
   "skills": ["skills/mcts_single_combo.json"],
   "variables": [
-    "op", "angle",
-    "demand", "tree_text", "history_prompt", "baseline_log",
-    "project_root", "ancestor_patches", "sandbox_timeout"
+    "op",
+    "demand", "tree_text", "history_prompt", "baseline_log", "node_summary",
+    "project_root", "ancestor_patches", "sandbox_timeout",
+    "_parent_node_id", "tree",
+    "sandbox_in_ch"
   ],
   "steps": [
     {
@@ -15,58 +17,80 @@
       "ref": "configs/mcts_critic.json",
       "inputs": {
         "op":             "$.op",
-        "angle":          "$.angle",
         "demand":         "$.demand",
         "tree_text":      "$.tree_text",
         "history_prompt": "$.history_prompt",
-        "baseline_log":   "$.baseline_log"
+        "baseline_log":   "$.baseline_log",
+        "node_summary":   "$.node_summary"
       }
     },
     {
-      "id": "engineer",
-      "type": "agent",
-      "ref": "configs/mcts_engineer.json",
+      "id": "parse_atomic_ops",
+      "type": "tool",
+      "ref": "mcts_parse_atomic_ops",
       "depends_on": ["critic"],
       "inputs": {
-        "target_file":    "critic.target_file",
-        "target_type":    "critic.target_type",
-        "target_name":    "critic.target_name",
-        "direction":      "critic.direction",
-        "reasoning":      "critic.reasoning",
-        "original_code":  "critic.original_code"
+        "op":               "$.op",
+        "node_a_file":      "critic.node_a_file",
+        "node_a_type":      "critic.node_a_type",
+        "node_a_name":      "critic.node_a_name",
+        "node_b_file":      "critic.node_b_file",
+        "node_b_type":      "critic.node_b_type",
+        "node_b_name":      "critic.node_b_name",
+        "direction":        "critic.direction",
+        "reasoning":        "critic.reasoning",
+        "new_nodes":        "critic.new_nodes",
+        "tree":             "$.tree",
+        "ancestor_patches": "$.ancestor_patches"
       }
     },
     {
-      "id": "ast_check",
+      "id": "engineer_tasks",
+      "type": "map",
+      "depends_on": ["parse_atomic_ops"],
+      "over": "parse_atomic_ops.engineer_tasks",
+      "as": "task",
+      "step": {
+        "type": "graph",
+        "ref": "graphs/mcts_engineer_task.json",
+        "inputs": {
+          "action":        "$.task.action",
+          "target_file":   "$.task.target_file",
+          "target_type":   "$.task.target_type",
+          "target_name":   "$.task.target_name",
+          "original_code": "$.task.original_code",
+          "direction":     "$.task.direction",
+          "reasoning":     "$.task.reasoning"
+        }
+      }
+    },
+    {
+      "id": "collect_patches",
       "type": "tool",
-      "ref": "mcts_ast_check",
-      "depends_on": ["engineer", "critic"],
+      "ref": "mcts_collect_patches",
+      "depends_on": ["engineer_tasks"],
       "inputs": {
-        "code":        "engineer.code",
-        "target_file": "critic.target_file",
-        "target_type": "critic.target_type",
-        "target_name": "critic.target_name"
+        "task_results": "$.engineer_tasks"
       }
     },
     {
       "id": "sandbox",
       "type": "input",
-      "ref": "mcts_sandbox",
+      "ref": "mcts_sandbox_via_session",
       "long_running": true,
-      "depends_on": ["ast_check"],
+      "depends_on": ["collect_patches"],
       "inputs": {
-        "project_root":     "$.project_root",
+        "sandbox_in_ch":    "$.sandbox_in_ch",
         "ancestor_patches": "$.ancestor_patches",
-        "new_patch":        "ast_check.patch",
-        "timeout":          "$.sandbox_timeout"
+        "new_patches":      "collect_patches.patches"
       }
     }
   ],
   "outputs": {
-    "op":          "$.op",
-    "angle":       "$.angle",
-    "proposal":    "critic",
-    "ast_ok":      "ast_check.ok",
-    "result":      "sandbox"
+    "op":              "$.op",
+    "_parent_node_id": "$._parent_node_id",
+    "proposal":        "critic",
+    "ast_ok":          "collect_patches.all_ok",
+    "result":          "sandbox"
   }
 }

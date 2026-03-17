@@ -1,0 +1,16 @@
+{
+  "name": "papw_method_writing_paths",
+  "description": "从 papw_root 派生方法论写作所需的所有路径",
+  "module": "utils.papw_tools",
+  "function": "papw_method_writing_paths",
+  "parameters": {
+    "type": "object",
+    "required": ["papw_root"],
+    "properties": {
+      "papw_root": {
+        "type": "string",
+        "description": "papw 根目录路径"
+      }
+    }
+  }
+}

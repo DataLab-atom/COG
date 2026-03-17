@@ -1,0 +1,40 @@
+{
+  "name": "u2e_diversity_select",
+  "description": "多样性感知亲本选择：在排名得分基础上叠加相对精英档案的多样性奖励，高度相似精英区域的个体被降权，从而减缓种群收敛",
+  "long_running": false,
+  "module": "utils.u2e_tools",
+  "function": "u2e_diversity_select",
+  "parameters": {
+    "type": "object",
+    "required": ["population", "elite_archive", "pop_size"],
+    "properties": {
+      "population": {
+        "type": "array",
+        "description": "当前函数的 individual 列表，每项含 exec_success / obj / funcs / code 字段"
+      },
+      "elite_archive": {
+        "type": "array",
+        "description": "当前精英档案（u2e_update_elite_archive 产出），用于计算多样性距离"
+      },
+      "pop_size": {
+        "type": "integer",
+        "description": "期望选出的 pair 数量（输出 2×pop_size 个体）"
+      },
+      "problem_type": {
+        "type": "string",
+        "description": "black_box | white_box（默认 white_box）",
+        "default": "white_box"
+      },
+      "seed_obj": {
+        "type": ["number", "null"],
+        "description": "seed 个体目标值，black_box 模式下用于过滤不优于 seed 的个体",
+        "default": null
+      },
+      "diversity_weight": {
+        "type": "number",
+        "description": "多样性奖励权重（0~1，0 退化为纯排名选择，默认 0.3）",
+        "default": 0.3
+      }
+    }
+  }
+}

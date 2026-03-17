@@ -1,0 +1,21 @@
+{
+  "name": "papw_build_references",
+  "description": "下载参考文献 PDF（paper_crawler），并可选调用 Semantic Scholar 在现有 bib 基础上叠加扩充文献",
+  "module": "utils.papw_input",
+  "function": "papw_build_references",
+  "async": true,
+  "parameters": {
+    "type": "object",
+    "required": ["papw_root", "requirement"],
+    "properties": {
+      "papw_root":          { "type": "string",  "description": "papw 工作根目录（= {output_dir}/papw）" },
+      "requirement":        { "type": "string",  "description": "需求描述（原始文本，可为中文）" },
+      "s2_query":           { "type": "string",  "description": "英文搜索关键词，由 s2_query_gen agent 生成", "default": "" },
+      "base_bib_path":      { "type": "string",  "description": "用户提供的初始 .bib 文件路径（可为空串）", "default": "" },
+      "expand_references":  { "type": "boolean", "description": "是否调用 Semantic Scholar 在 base_bib 基础上扩充文献", "default": true },
+      "s2_api_key":         { "type": "string",  "description": "Semantic Scholar API Key", "default": "" },
+      "all_paper_num":      { "type": "integer", "description": "目标参考文献总数", "default": 70 },
+      "unpaywall_email":   { "type": "string",  "description": "Unpaywall API 邮箱，用于下载开放获取论文 PDF", "default": "" }
+    }
+  }
+}

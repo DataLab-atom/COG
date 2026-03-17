@@ -1,0 +1,15 @@
+{
+  "name": "arch_build_codegen_tasks",
+  "description": "将 fn_stubs dict 和 tree 转换为 arch_codegen map 所需的任务列表，每个任务包含静态上下文和依赖列表",
+  "module": "utils.arch.codegen_task_builder",
+  "function": "arch_build_codegen_tasks",
+  "parameters": {
+    "type": "object",
+    "required": ["tree", "fn_stubs"],
+    "properties": {
+      "tree":        { "type": "array",  "description": "完整架构树" },
+      "fn_stubs":    { "type": "object", "description": "scaffold 返回的 fn_stubs 映射 {fn_id: stub}" },
+      "metric_name": { "type": "string", "description": "评估指标名，透传给 arch_codegen", "default": "" }
+    }
+  }
+}

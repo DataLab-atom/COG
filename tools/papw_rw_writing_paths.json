@@ -1,0 +1,13 @@
+{
+  "name": "papw_rw_writing_paths",
+  "description": "从 papw_root 派生相关工作写作所需路径",
+  "module": "utils.papw_tools",
+  "function": "papw_rw_writing_paths",
+  "parameters": {
+    "type": "object",
+    "required": ["papw_root"],
+    "properties": {
+      "papw_root": { "type": "string", "description": "papw 工作根目录" }
+    }
+  }
+}

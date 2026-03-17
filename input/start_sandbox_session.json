@@ -1,0 +1,37 @@
+{
+  "name": "start_sandbox_session",
+  "description": "在后台启动并发沙箱会话（复制项目 + 创建 venv + 安装依赖），立即返回通道 ID，供后续步骤通过 sandbox_in_ch 提交评估请求。会话在后台运行，调用方通过 close_sandbox_session 工具关闭。",
+  "module": "utils.mcts.inputs",
+  "function": "start_sandbox_session",
+  "async": true,
+  "long_running": false,
+  "parameters": {
+    "type": "object",
+    "required": ["project_root", "tree"],
+    "properties": {
+      "project_root": {
+        "type": "string",
+        "description": "项目根目录绝对路径，用于复制项目并创建隔离 venv"
+      },
+      "tree": {
+        "type": "array",
+        "description": "初始架构树节点列表（含函数体 code 字段），会话将以此为基准写入沙箱"
+      },
+      "max_workers": {
+        "type": "integer",
+        "description": "最大并发评估数量（Semaphore 上限），默认 4",
+        "default": 4
+      },
+      "timeout": {
+        "type": "number",
+        "description": "单次沙盒运行超时秒数，默认 300",
+        "default": 300.0
+      },
+      "base_patches": {
+        "type": "array",
+        "description": "可选的基准 patch 列表，启动时应用到 tree 作为所有评估的起点。典型用途：传入上一阶段（如 MCTS）的 best_node.patches，使新会话直接以最优状态为基准，调用方无需在每次请求中重复传递 ancestor_patches。",
+        "default": null
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "papw_exp_read_env_info",
+  "description": "读取实验环境信息",
+  "module": "utils.papw_tools",
+  "function": "papw_exp_read_env_info",
+  "parameters": {
+    "type": "object",
+    "required": ["env_dir"],
+    "properties": {
+      "env_dir": { "type": "string", "description": "实验环境目录" }
+    }
+  }
+}

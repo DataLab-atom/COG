@@ -1,5 +1,5 @@
 {
-  "description": "MCTS Engineer：根据 Critic 提出的优化方向，生成一份替换代码",
+  "description": "MCTS Engineer：根据原子任务（action/target/direction）生成一份替换或新建代码",
   "long_running": false,
   "skills": ["skills/mcts_engineer.json"],
   "agent_name": "mcts_engineer",
@@ -8,8 +8,10 @@
   "user_prompt_path": "./prompts/mcts_engineer/user.txt",
   "system_variables": [],
   "user_variables": [
+    "action",
     "target_file", "target_type", "target_name",
-    "direction", "reasoning", "original_code"
+    "original_code",
+    "direction", "reasoning"
   ],
   "json_output": true,
   "use_instructor": false,
@@ -21,7 +23,7 @@
       "code": {
         "type": "string",
         "minLength": 1,
-        "description": "完整的替换代码，以 ```python ... ``` 包裹"
+        "description": "完整的替换或新建代码，以 ```python ... ``` 包裹"
       }
     }
   },

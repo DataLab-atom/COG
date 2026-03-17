@@ -1,0 +1,180 @@
+{
+  "name": "mcts_run",
+  "description": "MCTS Beam Search 主图：接收外部 baseline + 共享沙箱会话通道 → 初始化根节点 → 多代并发搜索 → Human Gate → 写回最优 patch",
+  "long_running": true,
+  "skills": ["skills/mcts_run.json"],
+  "variables": [
+    "project_root",
+    "demand",
+    "sandbox_timeout",
+    "gate_channel_id",
+    "beam_width",
+    "consecutive_bad_limit",
+    "max_generations",
+    "tree",
+    "sandbox_in_ch",
+    "baseline_score",
+    "baseline_log"
+  ],
+  "steps": [
+    {
+      "id": "root_node",
+      "type": "tool",
+      "ref": "mcts_create_root_node",
+      "inputs": {
+        "baseline_score": "$.baseline_score",
+        "baseline_log":   "$.baseline_log"
+      }
+    },
+    {
+      "id": "gen_loop",
+      "type": "loop",
+      "depends_on": ["root_node"],
+      "max_iterations": 50,
+      "state": {
+        "frontier":        "root_node.frontier",
+        "all_nodes":       "root_node.all_nodes",
+        "best_node":       "root_node.root_node",
+        "consecutive_bad": 0,
+        "generation":      1,
+        "global_tried":    [],
+        "history":         [],
+        "history_prompt":  "",
+        "baseline_log":    "$.baseline_log",
+        "should_continue": true,
+        "tree":            "$.tree",
+        "sandbox_in_ch":   "$.sandbox_in_ch"
+      },
+      "body": [
+        {
+          "id": "tree_text",
+          "type": "tool",
+          "ref": "mcts_build_tree_text",
+          "inputs": {
+            "all_nodes": "$.all_nodes",
+            "frontier":  "$.frontier",
+            "best_node": "$.best_node"
+          }
+        },
+        {
+          "id": "fanout",
+          "type": "tool",
+          "ref": "mcts_build_fanout",
+          "depends_on": ["tree_text"],
+          "inputs": {
+            "frontier":        "$.frontier",
+            "global_tried":    "$.global_tried",
+            "beam_width":      "$.beam_width",
+            "demand":          "$.demand",
+            "tree_text":       "tree_text.tree_text",
+            "history_prompt":  "$.history_prompt",
+            "baseline_log":    "$.baseline_log",
+            "project_root":    "$.project_root",
+            "sandbox_timeout": "$.sandbox_timeout",
+            "tree":            "$.tree",
+            "sandbox_in_ch":   "$.sandbox_in_ch"
+          }
+        },
+        {
+          "id": "expand",
+          "type": "map",
+          "depends_on": ["fanout"],
+          "over": "fanout.tasks",
+          "as": "task",
+          "step": {
+            "type": "graph",
+            "ref": "graphs/mcts_single_combo.json",
+            "inputs": {
+              "op":               "$.task.op",
+              "demand":           "$.task.demand",
+              "tree_text":        "$.task.tree_text",
+              "history_prompt":   "$.task.history_prompt",
+              "baseline_log":     "$.task.baseline_log",
+              "node_summary":     "$.task.node_summary",
+              "project_root":     "$.task.project_root",
+              "ancestor_patches": "$.task.ancestor_patches",
+              "sandbox_timeout":  "$.task.sandbox_timeout",
+              "_parent_node_id":  "$.task._parent_node_id",
+              "tree":             "$.task.tree",
+              "sandbox_in_ch":    "$.task.sandbox_in_ch"
+            }
+          }
+        },
+        {
+          "id": "build_children",
+          "type": "tool",
+          "ref": "mcts_build_children",
+          "depends_on": ["expand"],
+          "inputs": {
+            "combo_results": "$.expand",
+            "all_nodes":     "$.all_nodes",
+            "generation":    "$.generation",
+            "best_node":     "$.best_node"
+          }
+        },
+        {
+          "id": "gate",
+          "type": "input",
+          "ref": "mcts_gate",
+          "long_running": true,
+          "depends_on": ["build_children"],
+          "inputs": {
+            "gate_channel_id": "$.gate_channel_id",
+            "generation":      "$.generation",
+            "tree_text":       "tree_text.tree_text",
+            "new_nodes":       "build_children.new_nodes"
+          }
+        },
+        {
+          "id": "update_state",
+          "type": "tool",
+          "ref": "mcts_update_state",
+          "depends_on": ["gate", "build_children"],
+          "inputs": {
+            "action":                "gate.action",
+            "next_mode":             "gate.next_mode",
+            "selected_ids":          "gate.selected_ids",
+            "new_nodes":             "build_children.new_nodes",
+            "all_nodes":             "build_children.all_nodes",
+            "frontier":              "$.frontier",
+            "best_node":             "build_children.best_node",
+            "consecutive_bad":       "$.consecutive_bad",
+            "generation":            "$.generation",
+            "history":               "$.history",
+            "global_tried":          "$.global_tried",
+            "baseline_log":          "$.baseline_log",
+            "beam_width":            "$.beam_width",
+            "consecutive_bad_limit": "$.consecutive_bad_limit"
+          }
+        }
+      ],
+      "state_update": {
+        "frontier":        "update_state.frontier",
+        "all_nodes":       "update_state.all_nodes",
+        "best_node":       "update_state.best_node",
+        "consecutive_bad": "update_state.consecutive_bad",
+        "generation":      "update_state.generation",
+        "global_tried":    "update_state.global_tried",
+        "history":         "update_state.history",
+        "history_prompt":  "update_state.history_prompt",
+        "baseline_log":    "update_state.baseline_log",
+        "should_continue": "update_state.should_continue"
+      },
+      "while": "{{should_continue}}"
+    },
+    {
+      "id": "apply_best",
+      "type": "tool",
+      "ref": "mcts_apply_best",
+      "depends_on": ["gen_loop"],
+      "inputs": {
+        "best_node":    "gen_loop.best_node",
+        "project_root": "$.project_root"
+      }
+    }
+  ],
+  "outputs": {
+    "best_node":    "gen_loop.best_node",
+    "apply_result": "apply_best"
+  }
+}

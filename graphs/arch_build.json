@@ -21,7 +21,9 @@
       "ref": "configs/arch_module_splitter.json",
       "depends_on": ["validation"],
       "inputs": {
-        "requirement": "$.requirement"
+        "requirement":   "$.requirement",
+        "metric_name":   "validation.metric_name",
+        "direction":     "validation.direction"
       }
     },
 
@@ -54,7 +56,9 @@
         "inputs": {
           "module_json":      "$.module",
           "all_modules_json": "module_split.result",
-          "requirement":      "$.requirement"
+          "requirement":      "$.requirement",
+          "metric_name":      "validation.metric_name",
+          "direction":        "validation.direction"
         }
       }
     },
@@ -99,7 +103,9 @@
         "inputs": {
           "file_json":       "$.file",
           "global_ids_json": [],
-          "requirement":     "$.requirement"
+          "requirement":     "$.requirement",
+          "metric_name":     "validation.metric_name",
+          "direction":       "validation.direction"
         }
       }
     },
@@ -125,7 +131,9 @@
         "files":       "leaf_backfill.files",
         "requirement": "$.requirement",
         "global_ids":  "leaf_backfill.global_ids",
-        "modules":     "file_backfill.modules"
+        "modules":     "file_backfill.modules",
+        "metric_name": "validation.metric_name",
+        "direction":   "validation.direction"
       }
     },
 
@@ -172,12 +180,12 @@
 
   ],
   "outputs": {
-    "ok":              "static_check.ok",
-    "errors":          "static_check.errors",
-    "warnings":        "static_check.warnings",
-    "tree":            "backfill.tree",
-    "metric_name":     "validation.metric_name",
-    "direction":       "validation.direction",
-    "metric_fn_code":  "validation.metric_fn_code"
+    "ok":          "static_check.ok",
+    "errors":      "static_check.errors",
+    "warnings":    "static_check.warnings",
+    "tree":        "backfill.tree",
+    "metric_name": "validation.metric_name",
+    "direction":   "validation.direction",
+    "data_files":  []
   }
 }

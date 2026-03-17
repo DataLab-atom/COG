@@ -1,0 +1,20 @@
+{
+  "name": "papw_get_loop_task",
+  "description": "从任务列表中按索引取出当前任务的目标和类型",
+  "module": "utils.papw_tools",
+  "function": "papw_get_loop_task",
+  "parameters": {
+    "type": "object",
+    "required": ["tasks", "index"],
+    "properties": {
+      "tasks": {
+        "type": "array",
+        "description": "叶子任务列表"
+      },
+      "index": {
+        "type": "integer",
+        "description": "当前任务索引"
+      }
+    }
+  }
+}

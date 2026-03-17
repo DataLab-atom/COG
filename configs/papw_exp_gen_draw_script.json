@@ -1,0 +1,30 @@
+{
+  "preset": "default",
+  "description": "生成实验绘图脚本：根据图表需求和数据收集项生成 draw.py 代码",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experimenting.json"
+  ],
+  "agent_name": "papw_exp_gen_draw_script",
+  "system_prompt_path": "./prompts/papw_exp_gen_draw_script/system.txt",
+  "user_prompt_path": "./prompts/papw_exp_gen_draw_script/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "charts",
+    "data_to_collect",
+    "perspective_info"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "draw_code"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "draw_code": {
+        "type": "string",
+        "description": "绘图 Python 脚本完整代码"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "papw_exp_get_next_change",
+  "description": "从 remaining_changes 列表取出第一项作为当前变更，返回剩余列表",
+  "module": "utils.papw_tools",
+  "function": "papw_exp_get_next_change",
+  "parameters": {
+    "type": "object",
+    "required": ["remaining_changes"],
+    "properties": {
+      "remaining_changes": { "type": "array", "description": "剩余变更列表" }
+    }
+  }
+}

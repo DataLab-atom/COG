@@ -1,0 +1,17 @@
+{
+  "name": "mcts_collect_patches",
+  "description": "从 map(mcts_engineer_task) 的结果列表中收集通过 AST 检查的有效 patch，过滤掉失败项",
+  "long_running": false,
+  "module": "utils.mcts.tools",
+  "function": "mcts_collect_patches",
+  "parameters": {
+    "type": "object",
+    "required": ["task_results"],
+    "properties": {
+      "task_results": {
+        "type": "array",
+        "description": "map 步骤返回的任务结果列表，每项含 ok/patch/error 字段"
+      }
+    }
+  }
+}

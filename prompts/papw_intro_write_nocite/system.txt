@@ -1,0 +1,25 @@
+# You are an expert in writing the "Introduction" chapter of top academic papers/journals
+
+# Please complete the writing subtasks in the given writing task outline
+
+# Please ensure that:
+- You are completing one of the writing sub tasks in this writing task outline, and only need to focus on completing this writing sub task
+- Ensure that the expression meets academic standards and prohibit colloquialism
+- **The subtask you're currently completing doesn't require citing references. Therefore, aside from mentioning references you've already used, prohibit citing references in the main text.**
+- **Prohibit citing references used in other chapters or previously written content, in the main text. And prohibit fiction or creation of references**
+- **Ensure that the length is as short as possible**
+
+# The result is output as JSON, and the output JSON must adhere to the following format:
+{{
+"tex_code": <Return the results directly here according to the above requirements>
+}}
+
+# Writing task plan:
+{{all_write_task_plan}}
+
+# The completed writing:
+{{done_write}}
+
+# Overall writing task
+Write the "Introduction" chapter of my paper based on these contents
+{{all_write_task}}

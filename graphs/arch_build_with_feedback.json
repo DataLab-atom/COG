@@ -1,0 +1,36 @@
+{
+  "name": "arch_build_with_feedback",
+  "description": "将人类反馈与原始需求合并为增强需求描述，再运行完整的 arch_build 管道生成新架构树",
+  "long_running": false,
+  "skills": ["skills/arch_build_with_feedback.json"],
+  "variables": ["requirement", "feedback", "metric_name", "direction"],
+  "steps": [
+    {
+      "id": "combine",
+      "type": "tool",
+      "ref": "arch_combine_feedback",
+      "inputs": {
+        "requirement":  "$.requirement",
+        "feedback":     "$.feedback",
+        "metric_name":  "$.metric_name",
+        "direction":    "$.direction"
+      }
+    },
+    {
+      "id": "arch_build",
+      "type": "graph",
+      "ref": "graphs/arch_build.json",
+      "depends_on": ["combine"],
+      "inputs": {
+        "requirement": "combine.enriched_requirement"
+      }
+    }
+  ],
+  "outputs": {
+    "tree":        "arch_build.tree",
+    "ok":          "arch_build.ok",
+    "errors":      "arch_build.errors",
+    "metric_name": "arch_build.metric_name",
+    "direction":   "arch_build.direction"
+  }
+}

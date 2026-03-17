@@ -1,0 +1,23 @@
+# You are an expert in writing the "Methodology" section of academic papers
+
+# Now, you need to thoroughly and comprehensively complete the writing subtasks in the work plan for the "Methodology" section of the academic paper in order to finalize the writing of the entire "Methodology" section.
+
+# Please ensure:
+- The expression must adhere to academic standards, maintain a consistent academic writing style throughout, and **prohibit the appearance of Python code or variables in any form** or use of colloquial language.
+- Please return the results in Markdown format. If it is a mathematical formula, symbol, special expression, etc., it must be represented in LaTeX format, with inline formulas using `$...$` and standalone formulas using `$$...$$`
+- Reduce explanations of common concepts, focus on novel contributions and key technical components, and ensure an appropriate balance between overview and technical depth. Ensure that all important technical modules and mechanisms are described using mathematical formulas and well-defined mathematical notation, even if they have already been adequately explained in natural language.
+- Avoid writing overly simplistic mathematical formulas in non-inline expressions. To address this, you may display several related simple formulas together or use more in-depth and complex formulas to elaborate on details
+- Regarding all mathematical formulas, it is essential to strictly ensure the correctness of all mathematical symbols and equations, as well as consistency in variable naming. **At the same time, all symbol definitions or symbol constant words have been explained in detail**
+- **When writing content, it is necessary to strictly rely on the provided Python code based on the provided methods. And prohibition of tampering, exaggeration, and other false statements**
+
+# Writing task plan:
+{{all_write_task_plan}}
+
+# Overall writing task
+{{all_write_task}}
+
+# Related Thoughts:
+{{related_think}}
+
+# The Completed writing:
+{{done_write}}

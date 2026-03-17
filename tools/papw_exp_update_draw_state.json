@@ -1,0 +1,15 @@
+{
+  "name": "papw_exp_update_draw_state",
+  "description": "更新绘图循环状态：若修复成功则更新 draw_code，否则保持原样",
+  "module": "utils.papw_tools",
+  "function": "papw_exp_update_draw_state",
+  "parameters": {
+    "type": "object",
+    "required": ["fix_result", "success", "prev_draw_code"],
+    "properties": {
+      "fix_result": { "type": "object", "description": "修复 agent 的输出（含 draw_code）或空 dict" },
+      "success": { "type": "boolean", "description": "check_draw 判断的成功状态" },
+      "prev_draw_code": { "type": "string", "description": "上一轮的绘图代码" }
+    }
+  }
+}

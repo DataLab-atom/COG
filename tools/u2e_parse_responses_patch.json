@@ -1,0 +1,51 @@
+{
+  "name": "u2e_parse_responses_patch",
+  "description": "patch 模式：将 LLM 原始响应列表解析为含 patches 字段的 individual dict 列表；继承 parent_patches，仅替换目标函数对应的 patch",
+  "long_running": false,
+  "module": "utils.u2e_tools",
+  "function": "u2e_parse_responses_patch",
+  "parameters": {
+    "type": "object",
+    "required": ["responses", "parent_funcs", "parent_patches", "func_index", "iteration", "target_file", "func_name"],
+    "properties": {
+      "responses": {
+        "type": "array",
+        "description": "LLM 文本响应列表，每项为一条原始输出字符串"
+      },
+      "parent_funcs": {
+        "type": "array",
+        "description": "亲本函数源码列表（深拷贝后在 func_index 处替换，用于拼合 code 字段）"
+      },
+      "parent_patches": {
+        "type": "array",
+        "description": "亲本 patches 列表（继承非目标函数的所有 patch，仅替换目标函数 patch）"
+      },
+      "func_index": {
+        "type": "integer",
+        "description": "本次优化的函数下标"
+      },
+      "iteration": {
+        "type": "integer",
+        "description": "当前迭代编号（用于生成文件路径）"
+      },
+      "target_file": {
+        "type": "string",
+        "description": "目标函数所在文件相对路径（写入新 patch 的 target_file 字段）"
+      },
+      "func_name": {
+        "type": "string",
+        "description": "目标函数名（写入新 patch 的 target_name 字段，也用于在 parent_patches 中定位目标 patch）"
+      },
+      "target_type": {
+        "type": "string",
+        "description": "目标节点类型（\"function\" 或 \"class\"），默认 \"function\"",
+        "default": "function"
+      },
+      "id_offset": {
+        "type": "integer",
+        "description": "response_id 偏移量，防止同一迭代内 ID 冲突（默认 0）",
+        "default": 0
+      }
+    }
+  }
+}

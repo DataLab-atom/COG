@@ -1,0 +1,25 @@
+{
+  "name": "arch_refine_with_feedback",
+  "description": "接收人类反馈后对架构树进行整体重构，自动选择 patch_chain（局部修改）或 full_rebuild（全量重建）策略，输出新设计树",
+  "long_running": false,
+  "owned_by": "graphs/arch_refine_with_feedback.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["tree", "requirement", "feedback"],
+    "properties": {
+      "tree":        {"type": "array",  "description": "当前架构设计树"},
+      "requirement": {"type": "string", "description": "原始需求描述"},
+      "metric_name": {"type": "string", "description": "评估指标名", "default": ""},
+      "direction":   {"type": "string", "description": "优化方向 max 或 min", "default": ""},
+      "feedback":    {"type": "string", "description": "人类反馈文本"}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "tree":      {"type": "array",  "description": "重构后的新设计树"},
+      "strategy":  {"type": "string", "description": "采用的策略：patch_chain 或 full_rebuild"},
+      "reasoning": {"type": "string", "description": "选择此策略的原因说明"}
+    }
+  }
+}

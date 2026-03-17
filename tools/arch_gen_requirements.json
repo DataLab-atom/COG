@@ -1,0 +1,21 @@
+{
+  "name": "arch_gen_requirements",
+  "description": "扫描已生成的 Python 文件，提取第三方库依赖并写入 output_dir/requirements.txt",
+  "module": "utils.arch.gen_requirements",
+  "function": "arch_gen_requirements",
+  "parameters": {
+    "type": "object",
+    "required": ["written", "output_dir"],
+    "properties": {
+      "written": {
+        "type": "array",
+        "description": "已写入磁盘的 Python 文件绝对路径列表",
+        "items": { "type": "string" }
+      },
+      "output_dir": {
+        "type": "string",
+        "description": "项目根目录，requirements.txt 写入此处"
+      }
+    }
+  }
+}

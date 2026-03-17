@@ -1,0 +1,81 @@
+{
+  "name": "mcts_run",
+  "description": "MCTS Beam Search 主流程：对指定项目执行多代并发搜索，每代通过 Human Gate 接受人工决策，最终将全局最优 patch 写回项目",
+  "long_running": true,
+  "owned_by": "graphs/mcts_run.json",
+  "input_schema": {
+    "type": "object",
+    "required": [
+      "project_root",
+      "demand",
+      "sandbox_timeout",
+      "gate_channel_id",
+      "beam_width",
+      "consecutive_bad_limit",
+      "max_generations",
+      "tree",
+      "sandbox_in_ch",
+      "baseline_score",
+      "baseline_log"
+    ],
+    "properties": {
+      "project_root": {
+        "type": "string",
+        "description": "待优化项目的根目录绝对路径"
+      },
+      "demand": {
+        "type": "string",
+        "description": "优化需求描述（传递给 Critic Agent）"
+      },
+      "sandbox_timeout": {
+        "type": "number",
+        "description": "沙盒评估超时秒数（推荐 300）"
+      },
+      "gate_channel_id": {
+        "type": "string",
+        "description": "Human Gate 通道 ID，须由调用方在图启动前用 create_channel() 创建"
+      },
+      "beam_width": {
+        "type": "integer",
+        "description": "每代 Beam 宽度（保留前 K 个节点），推荐 3"
+      },
+      "consecutive_bad_limit": {
+        "type": "integer",
+        "description": "连续无改善上限，超过后自动回滚，推荐 3"
+      },
+      "max_generations": {
+        "type": "integer",
+        "description": "最大搜索代数（安全上限，推荐 50）"
+      },
+      "tree": {
+        "type": "array",
+        "description": "初始架构树节点列表，用于沙箱初始化和代码上下文"
+      },
+      "sandbox_in_ch": {
+        "type": "string",
+        "description": "共享沙箱会话输入通道 ID（由 start_sandbox_session 返回）"
+      },
+      "baseline_score": {
+        "type": "number",
+        "description": "baseline 初始分数（由调用方提前评估后传入）"
+      },
+      "baseline_log": {
+        "type": "string",
+        "description": "baseline main.py stdout 日志（由调用方提前评估后传入）"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "best_node": {
+        "type": "object",
+        "description": "全局最优节点 dict，含 node_id / score / patches / output_log 等字段"
+      },
+      "apply_result": {
+        "type": "object",
+        "description": "写回结果，含 ok / error / applied_patches 字段"
+      }
+    }
+  }
+}

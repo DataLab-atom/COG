@@ -1,0 +1,58 @@
+{
+  "preset": "default",
+  "description": "生成实验分析角度",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experimenting.json"
+  ],
+  "agent_name": "papw_exp_perspectives",
+  "system_prompt_path": "./prompts/papw_exp_perspectives/system.txt",
+  "user_prompt_path": "./prompts/papw_exp_perspectives/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "method_statement",
+    "main_research",
+    "reference_info",
+    "num_perspectives"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "perspectives"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "perspectives": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "analysis_perspective",
+            "core_focus",
+            "differentiated_feature",
+            "expected_insight",
+            "experimental_metric"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "analysis_perspective": {
+              "type": "string"
+            },
+            "core_focus": {
+              "type": "string"
+            },
+            "differentiated_feature": {
+              "type": "string"
+            },
+            "expected_insight": {
+              "type": "string"
+            },
+            "experimental_metric": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

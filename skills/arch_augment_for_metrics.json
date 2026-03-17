@@ -1,0 +1,23 @@
+{
+  "name": "arch_augment_for_metrics",
+  "description": "检查现有项目架构树是否具备计算目标指标的函数，缺失时生成 patch_chain 补全所需架构节点",
+  "long_running": false,
+  "owned_by": "configs/arch_augment_for_metrics.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["metric_name", "requirement", "tree_json"],
+    "properties": {
+      "metric_name": {"type": "string", "description": "目标优化指标名称"},
+      "requirement": {"type": "string", "description": "用户需求描述"},
+      "tree_json":   {"type": "array",  "description": "当前架构树"}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "needs_augmentation": {"type": "boolean"},
+      "reasoning":          {"type": "string"},
+      "patch_chain":        {"type": "array"}
+    }
+  }
+}

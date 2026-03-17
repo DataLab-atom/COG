@@ -1,48 +1,104 @@
 {
-  "description": "MCTS Critic：针对指定 (operator, angle) 组合，分析项目代码并提出一个具体的优化目标",
+  "preset": "fast",
+  "description": "MCTS Critic：针对指定 operator，分析项目代码并提出一个具体的优化目标",
   "long_running": false,
-  "skills": ["skills/mcts_critic.json"],
+  "skills": [
+    "skills/mcts_critic.json"
+  ],
   "agent_name": "mcts_critic",
-  "model": "gpt-4o",
+  "model": "openai/gpt-5-mini",
   "system_prompt_path": "./prompts/mcts_critic/system.txt",
   "user_prompt_path": "./prompts/mcts_critic/user.txt",
-  "system_variables": ["op", "angle"],
-  "user_variables": ["demand", "tree_text", "history_prompt", "baseline_log"],
-  "json_output": true,
-  "use_instructor": false,
+  "system_variables": [
+    "op"
+  ],
+  "user_variables": [
+    "demand",
+    "tree_text",
+    "history_prompt",
+    "baseline_log",
+    "node_summary"
+  ],
   "json_schema": {
     "type": "object",
-    "required": ["target_file", "target_type", "target_name", "direction", "reasoning"],
+    "required": [
+      "node_a_file",
+      "node_a_type",
+      "node_a_name",
+      "node_b_file",
+      "node_b_type",
+      "node_b_name",
+      "direction",
+      "reasoning"
+    ],
     "additionalProperties": false,
     "properties": {
-      "target_file": {
+      "node_a_file": {
         "type": "string",
-        "description": "相对路径，例如 src/model.py"
+        "description": "主节点（二元算子的 A，多元算子的入口节点）所在文件相对路径"
       },
-      "target_type": {
+      "node_a_type": {
         "type": "string",
-        "enum": ["function", "class"],
-        "description": "优化目标的类型"
+        "enum": [
+          "function",
+          "class"
+        ],
+        "description": "主节点的类型"
       },
-      "target_name": {
+      "node_a_name": {
         "type": "string",
-        "description": "要优化的函数名或类名"
+        "description": "主节点的函数名或类名"
+      },
+      "node_b_file": {
+        "type": "string",
+        "description": "次节点（二元算子的 B，多元算子的出口节点）所在文件相对路径"
+      },
+      "node_b_type": {
+        "type": "string",
+        "enum": [
+          "function",
+          "class"
+        ],
+        "description": "次节点的类型"
+      },
+      "node_b_name": {
+        "type": "string",
+        "description": "次节点的函数名或类名"
       },
       "direction": {
         "type": "string",
-        "description": "一句话优化方向描述"
+        "description": "一句话结构改造方向描述"
       },
       "reasoning": {
         "type": "string",
-        "description": "为何该方向能提升指标的理由"
+        "description": "为何该结构改造能提升指标的理由"
+      },
+      "new_nodes": {
+        "type": "array",
+        "description": "insert/split/extract 算子需要新建的节点列表；其他算子省略此字段",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "description"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "新节点的函数名或类名"
+            },
+            "description": {
+              "type": "string",
+              "description": "新节点的职责说明（一句话）"
+            }
+          }
+        }
       }
     }
   },
-  "enable_history": false,
-  "timeout": 60.0,
   "max_retries": 2,
   "params": {
-    "max_tokens": 1024,
     "temperature": 0.6
   }
 }

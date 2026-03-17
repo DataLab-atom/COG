@@ -1,0 +1,16 @@
+{
+  "name": "papw_read_file",
+  "description": "读取文件内容，文件不存在则返回空字符串",
+  "module": "utils.papw_tools",
+  "function": "papw_read_file",
+  "parameters": {
+    "type": "object",
+    "required": ["file_path"],
+    "properties": {
+      "file_path": {
+        "type": "string",
+        "description": "文件绝对路径"
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "u2e_build_sandbox_eval_tasks",
+  "description": "patch 模式：将 individual 列表转换为沙盒评估任务列表，过滤无效个体（缺少 patches 字段）",
+  "long_running": false,
+  "module": "utils.u2e_tools",
+  "function": "u2e_build_sandbox_eval_tasks",
+  "parameters": {
+    "type": "object",
+    "required": ["population", "sandbox_in_ch"],
+    "properties": {
+      "population": {
+        "type": "array",
+        "description": "待评估的 individual 列表，每项应含 patches 字段"
+      },
+      "sandbox_in_ch": {
+        "type": "string",
+        "description": "共享沙箱会话输入通道 ID（由 start_sandbox_session 创建）"
+      }
+    }
+  }
+}

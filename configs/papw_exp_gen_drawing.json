@@ -1,0 +1,31 @@
+{
+  "preset": "default",
+  "description": "生成可视化绘图代码",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experimenting.json"
+  ],
+  "agent_name": "papw_exp_gen_drawing",
+  "system_prompt_path": "./prompts/papw_exp_gen_drawing/system.txt",
+  "user_prompt_path": "./prompts/papw_exp_gen_drawing/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "perspective_info",
+    "experiment_output",
+    "result_dir",
+    "chart_save_path"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "drawing_code"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "drawing_code": {
+        "type": "string",
+        "description": "绘图 Python 代码"
+      }
+    }
+  }
+}

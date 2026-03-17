@@ -1,0 +1,19 @@
+Problem: {{problem_desc}}
+
+Current structured memory:
+{{prior_memory}}
+
+New reflections from this generation:
+{{new_reflections}}
+
+Update the structured memory. Return a JSON object with exactly three arrays:
+
+- "principles": general algorithmic principles that consistently help (keep the best 5, remove redundant or outdated ones)
+- "failed_patterns": code patterns or strategies that consistently fail or harm performance (keep the best 5)
+- "best_tricks": specific implementation tricks that produced measurable gains (keep the best 5)
+
+Rules:
+- Each entry must be a single, concrete, actionable sentence (max 30 words)
+- Merge similar entries rather than duplicating them
+- Remove entries that contradict newer evidence
+- If prior memory is empty, extract insights from new reflections only

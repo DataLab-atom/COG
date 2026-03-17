@@ -1,8 +1,8 @@
 {
   "name": "arch_internal_fanout",
-  "description": "两阶段全量并发：Phase1 并发定义所有 type::，Phase2 并发定义所有 fn::（类成员函数等待 init_fn 完成），返回所有内部节点定义",
+  "description": "三阶段并发：Phase1 所有 type::，Phase2 非 main 文件 fn::，Phase3 main.py fn::（最后，可引用所有已定义节点），返回所有内部节点定义",
   "long_running": false,
-  "module": "arch.internal_fanout",
+  "module": "utils.arch.internal_fanout",
   "function": "arch_internal_fanout",
   "async": true,
   "parameters": {
@@ -23,7 +23,15 @@
       },
       "global_ids": {
         "type": "array",
-        "description": "叶子阶段结束后的全局 id 列表"
+        "description": "叶子阶段结束后的全局 id 列表（含 fn::compute_metrics）"
+      },
+      "metric_name": {
+        "type": "string",
+        "description": "评估指标名称，传递给内部定义器"
+      },
+      "direction": {
+        "type": "string",
+        "description": "优化方向（minimize / maximize），传递给内部定义器"
       }
     }
   }

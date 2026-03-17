@@ -1,0 +1,33 @@
+{
+  "preset": "default",
+  "description": "识别研究领域以组织相关工作写作",
+  "long_running": false,
+  "skills": [
+    "skills/papw_related_work_writing.json"
+  ],
+  "agent_name": "papw_rw_fields",
+  "system_prompt_path": "./prompts/papw_rw_fields/system.txt",
+  "user_prompt_path": "./prompts/papw_rw_fields/user.txt",
+  "system_variables": [
+    "field_num"
+  ],
+  "user_variables": [
+    "writing_requirement"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "related_fields"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "related_fields": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "研究领域列表"
+      }
+    }
+  }
+}

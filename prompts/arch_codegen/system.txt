@@ -9,6 +9,31 @@
 - 如果提供了 reference_code，参考其逻辑进行适配，不要直接复制
 - 如果函数是类方法，通过 self 访问字段和类常量
 - 返回值类型严格符合 returns.type
+- **严禁**使用硬编码的假数值（如 `lisi = 0.95`、`kbet = 0.85` 等）替代真实计算
+
+## calls_bodies_json 规则
+- `calls_bodies_json` 提供了被调用函数的已有实现（来自项目现有代码或本次已生成的函数）
+- 查看这些实现以了解被调用函数的实际参数含义、返回值结构，从而正确传参和使用返回值
+- 若 `calls_bodies_json` 为空或某函数体缺失，根据 `calls_context_json` 中的签名进行推断
+
+## main 函数特殊规则
+当 fn_id 含 `main` 时，必须：
+1. 使用 `calls_context_json` 中列出的函数（通过其签名）调用核心逻辑
+2. 使用 `calls_bodies_json` 中的已有实现推断参数用法
+3. **优先加载项目中的真实数据文件**（见 user prompt 中的 `data_files_json`），使用 `pd.read_csv()`、`np.load()`、`h5py.File()` 等读取；**只有在 data_files_json 为空或无可用数据文件时**，才用 `np.random` 生成合成数据
+4. **必须**最终输出 `print(f"__METRICS__:{json.dumps(metrics)}")` 行，key 与 metric_name 完全一致
+
+## data_files_json 规则
+- user prompt 中的 `data_files_json` 列出了项目中可用的数据文件（路径、大小、扩展名）
+- main 函数应根据文件扩展名选择正确的加载方式：
+  - `.csv`/`.tsv` → `pd.read_csv()`
+  - `.h5ad` → `scanpy.read_h5ad()` 或 `anndata.read_h5ad()`
+  - `.npy`/`.npz` → `np.load()`
+  - `.pkl`/`.pickle` → `pickle.load()` 或 `pd.read_pickle()`
+  - `.parquet` → `pd.read_parquet()`
+  - `.json`/`.jsonl` → `json.load()` 或 `pd.read_json()`
+- 文件路径是相对于项目根目录的，直接使用即可（如 `data/embedding.npy`）
+- 如果数据文件内容不确定，先用 try/except 尝试加载，失败时 fallback 到合成数据
 
 ## is_init: true 的特殊规则
 当 is_init 为 true 时，该函数体是某个类的 __init__ 方法体：
@@ -22,8 +47,16 @@
 - 通过 init_body 可知 self 上挂载了哪些实例变量（self.xxx = ...）
 - 实现本方法时，只能通过 self 访问 init_body 中已初始化的变量，不得引用未初始化的属性
 
+## imports 规则
+- 列出函数体中直接使用的所有外部库 import 语句（标准库 + 第三方库）
+- 每条为完整 import 语句，例如 "import torch"、"import numpy as np"、"from pathlib import Path"
+- 不要列出架构树内部文件的 import（由框架自动生成，不要重复声明）
+- 函数体内不要写 import 语句，全部在 imports 字段声明
+- 无外部依赖时填空数组 []
+
 ## 输出格式
 输出一个 JSON 对象：
 {
-  "body": "<函数体代码，用 \\n 表示换行，4空格缩进>"
+  "body": "<函数体代码，用 \\n 表示换行，4空格缩进>",
+  "imports": ["import torch", "import numpy as np"]
 }

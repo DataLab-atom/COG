@@ -1,0 +1,31 @@
+{
+  "preset": "default",
+  "description": "生成方法陈述",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experimenting.json"
+  ],
+  "agent_name": "papw_exp_method_statement",
+  "system_prompt_path": "./prompts/papw_exp_method_statement/system.txt",
+  "user_prompt_path": "./prompts/papw_exp_method_statement/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "method_name",
+    "main_research",
+    "arch_tree",
+    "best_patches"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "method_statement"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "method_statement": {
+        "type": "string",
+        "description": "方法陈述"
+      }
+    }
+  }
+}

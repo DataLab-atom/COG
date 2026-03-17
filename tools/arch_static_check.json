@@ -2,7 +2,7 @@
   "name": "arch_static_check",
   "description": "对完整项目树执行全量静态检查，返回检查结果和错误列表",
   "long_running": false,
-  "module": "arch.static_check",
+  "module": "utils.arch.arch_validate",
   "function": "arch_static_check",
   "parameters": {
     "type": "object",

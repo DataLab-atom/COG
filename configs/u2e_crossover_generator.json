@@ -1,0 +1,21 @@
+{
+  "preset": "creative",
+  "description": "U2E 交叉生成 Agent：根据短期反思结合 worse/better 代码，生成改进后的函数实现",
+  "long_running": false,
+  "skills": [
+    "skills/u2e_crossover_generator.json"
+  ],
+  "agent_name": "u2e_crossover_generator",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/u2e/crossover_generator/system.txt",
+  "user_prompt_path": "./prompts/u2e/crossover_generator/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "user_generator",
+    "func_signature",
+    "worse_code",
+    "better_code",
+    "reflection",
+    "func_name"
+  ]
+}

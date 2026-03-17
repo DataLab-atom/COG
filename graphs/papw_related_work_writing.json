@@ -1,0 +1,225 @@
+{
+  "name": "papw_related_work_writing",
+  "description": "相关工作章节写作子图：识别研究领域 → 逐领域逐句（思考 → 检索 → 选引用 → 写作）→ 整合 → 清理 bib → 保存",
+  "long_running": true,
+  "skills": ["skills/papw_related_work_writing.json"],
+  "variables": [
+    "papw_root",
+    "arch_tree",
+    "best_patches",
+    "full_text_vb_path",
+    "tex_template_path",
+    "text_model_name",
+    "embedding_model",
+    "embedding_model_source",
+    "reranker_path",
+    "reranker_model_source",
+    "database_device",
+    "field_num",
+    "sentence_num",
+    "used_cite_num",
+    "used_data_num"
+  ],
+  "steps": [
+    {
+      "id": "paths",
+      "type": "tool",
+      "ref": "tools/papw_rw_writing_paths.json",
+      "inputs": {
+        "papw_root": "$.papw_root"
+      }
+    },
+    {
+      "id": "build_req",
+      "type": "tool",
+      "ref": "tools/papw_build_writing_requirement.json",
+      "depends_on": ["paths"],
+      "inputs": {
+        "arch_tree": "$.arch_tree",
+        "best_patches": "$.best_patches",
+        "research_information_path": "paths.research_information_path"
+      }
+    },
+    {
+      "id": "read_template",
+      "type": "tool",
+      "ref": "tools/papw_read_file.json",
+      "inputs": {
+        "file_path": "$.tex_template_path"
+      }
+    },
+    {
+      "id": "identify_fields",
+      "type": "agent",
+      "ref": "configs/papw_rw_fields.json",
+      "depends_on": ["build_req"],
+      "inputs": {
+        "field_num": "$.field_num",
+        "writing_requirement": "build_req.writing_requirement"
+      }
+    },
+    {
+      "id": "write_loop",
+      "type": "loop",
+      "depends_on": ["identify_fields", "read_template"],
+      "max_iterations": 50,
+      "while": "{{has_more_tasks}}",
+      "state": {
+        "fields": "identify_fields.related_fields",
+        "field_index": 0,
+        "sentence_index": 0,
+        "done_write": "",
+        "all_bib_content": "",
+        "used_bib_set": [],
+        "has_more_tasks": true,
+        "writing_requirement": "build_req.writing_requirement",
+        "tex_template": "read_template.content",
+        "sentence_num": "$.sentence_num",
+        "used_cite_num": "$.used_cite_num",
+        "used_data_num": "$.used_data_num",
+        "full_text_vb_path": "$.full_text_vb_path",
+        "embedding_model": "$.embedding_model",
+        "embedding_model_source": "$.embedding_model_source",
+        "reranker_path": "$.reranker_path",
+        "reranker_model_source": "$.reranker_model_source",
+        "database_device": "$.database_device"
+      },
+      "body": [
+        {
+          "id": "current",
+          "type": "tool",
+          "ref": "tools/papw_rw_get_current_task.json",
+          "inputs": {
+            "fields": "$.fields",
+            "field_index": "$.field_index",
+            "sentence_index": "$.sentence_index",
+            "sentence_num": "$.sentence_num"
+          }
+        },
+        {
+          "id": "think",
+          "type": "agent",
+          "ref": "configs/papw_rw_think.json",
+          "depends_on": ["current"],
+          "inputs": {
+            "current_field": "current.current_field",
+            "done_write": "$.done_write",
+            "writing_requirement": "$.writing_requirement"
+          }
+        },
+        {
+          "id": "retrieve",
+          "type": "input",
+          "ref": "input/papw_vdb_search_rerank.json",
+          "depends_on": ["think"],
+          "inputs": {
+            "persist_directory_path": "$.full_text_vb_path",
+            "query": "think.think_related_work",
+            "retrieval_num": 10,
+            "embedding_model": "$.embedding_model",
+            "embedding_model_source": "$.embedding_model_source",
+            "reranker_path": "$.reranker_path",
+            "reranker_model_source": "$.reranker_model_source",
+            "database_device": "$.database_device"
+          }
+        },
+        {
+          "id": "select_cite",
+          "type": "tool",
+          "ref": "tools/papw_select_citations.json",
+          "depends_on": ["retrieve"],
+          "inputs": {
+            "retrieval_results": "retrieve.results",
+            "used_bib_set": "$.used_bib_set",
+            "max_cite_num": "$.used_cite_num",
+            "max_data_per_cite": "$.used_data_num"
+          }
+        },
+        {
+          "id": "write",
+          "type": "agent",
+          "ref": "configs/papw_rw_write.json",
+          "depends_on": ["select_cite"],
+          "inputs": {
+            "tex_template": "$.tex_template",
+            "current_field": "current.current_field",
+            "writing_requirement": "$.writing_requirement",
+            "think_content": "think.think_related_work",
+            "references": "select_cite.formatted_text_refs"
+          }
+        },
+        {
+          "id": "update",
+          "type": "tool",
+          "ref": "tools/papw_rw_update_write_state.json",
+          "depends_on": ["write"],
+          "inputs": {
+            "tex_code": "write.tex_code",
+            "selected_bib_entries": "select_cite.selected_bib_entries",
+            "current_done_write": "$.done_write",
+            "current_all_bib": "$.all_bib_content",
+            "current_used_bib_set": "$.used_bib_set",
+            "field_index": "$.field_index",
+            "sentence_index": "$.sentence_index",
+            "sentence_num": "$.sentence_num",
+            "total_fields": "current.total_fields"
+          }
+        }
+      ],
+      "state_update": {
+        "done_write": "update.done_write",
+        "all_bib_content": "update.all_bib_content",
+        "used_bib_set": "update.used_bib_set",
+        "field_index": "update.field_index",
+        "sentence_index": "update.sentence_index",
+        "has_more_tasks": "update.has_more_tasks"
+      }
+    },
+    {
+      "id": "integrate",
+      "type": "agent",
+      "ref": "configs/papw_rw_integrate.json",
+      "depends_on": ["write_loop"],
+      "inputs": {
+        "tex_template": "read_template.content",
+        "done_write": "write_loop.done_write"
+      }
+    },
+    {
+      "id": "clean_bib",
+      "type": "tool",
+      "ref": "tools/papw_rw_clean_bib_by_content.json",
+      "depends_on": ["integrate"],
+      "inputs": {
+        "all_bib_content": "write_loop.all_bib_content",
+        "tex_content": "integrate.tex_code"
+      }
+    },
+    {
+      "id": "save_tex",
+      "type": "tool",
+      "ref": "tools/papw_save_file.json",
+      "depends_on": ["integrate"],
+      "inputs": {
+        "file_path": "paths.result_write_path",
+        "content": "integrate.tex_code"
+      }
+    },
+    {
+      "id": "save_bib",
+      "type": "tool",
+      "ref": "tools/papw_save_file.json",
+      "depends_on": ["clean_bib"],
+      "inputs": {
+        "file_path": "paths.bib_result_path",
+        "content": "clean_bib.cleaned_bib"
+      }
+    }
+  ],
+  "outputs": {
+    "tex_path": "save_tex.file_path",
+    "tex_code": "integrate.tex_code",
+    "bib_result_path": "save_bib.file_path",
+    "bib_result_list_path": "paths.bib_result_list_path"
+  }
+}

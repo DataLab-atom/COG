@@ -1,0 +1,89 @@
+{
+  "preset": "strong",
+  "description": "规划实验：根据分析角度和项目架构，生成实验变更计划、数据收集项和图表需求",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experimenting.json"
+  ],
+  "agent_name": "papw_exp_plan_experiment",
+  "system_prompt_path": "./prompts/papw_exp_plan_experiment/system.txt",
+  "user_prompt_path": "./prompts/papw_exp_plan_experiment/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "perspective_info",
+    "arch_tree",
+    "best_patches"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "changes",
+      "data_to_collect",
+      "charts"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "changes": {
+        "type": "array",
+        "description": "需要修改的函数列表",
+        "items": {
+          "type": "object",
+          "required": [
+            "target_name",
+            "file_path",
+            "intent"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "target_name": {
+              "type": "string",
+              "description": "目标函数名"
+            },
+            "file_path": {
+              "type": "string",
+              "description": "目标文件相对路径"
+            },
+            "intent": {
+              "type": "string",
+              "description": "修改意图说明"
+            }
+          }
+        }
+      },
+      "data_to_collect": {
+        "type": "array",
+        "description": "实验需要收集的数据项",
+        "items": {
+          "type": "string"
+        }
+      },
+      "charts": {
+        "type": "array",
+        "description": "需要生成的图表",
+        "items": {
+          "type": "object",
+          "required": [
+            "title",
+            "chart_type",
+            "data_source"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "图表标题"
+            },
+            "chart_type": {
+              "type": "string",
+              "description": "图表类型（bar/line/scatter/heatmap 等）"
+            },
+            "data_source": {
+              "type": "string",
+              "description": "数据来源说明"
+            }
+          }
+        }
+      }
+    }
+  }
+}

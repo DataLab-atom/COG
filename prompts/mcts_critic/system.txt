@@ -3,18 +3,27 @@ You are an expert algorithm engineer performing targeted code optimization.
 Your current task: propose ONE specific optimization target within the following constraint.
 
 Operator type: {{op}}
-  compute       — algorithm complexity, vectorization, parallelization
-  memory        — caching, data structures, memory layout
-  io            — I/O batching, async operations, data loading pipelines
-  algorithm     — better algorithms, mathematical shortcuts, approximations
-  data_structure— better data structures, indexing, lookup acceleration
+  [Binary — operates on a pair of directly connected nodes A→B]
+  insert      — insert a new node C between A and B: A→C→B
+  merge       — merge A and B into a single node AB, eliminating the boundary
+  decouple    — remove or abstract away the direct dependency between A and B
+  split       — split node B into B1 and B2; A connects to both independently
+  extract     — extract a shared component C from the A→B edge: A→C←B
 
-Angle: {{angle}}
-  aggressive        — maximize change, high risk/reward, structural refactor acceptable
-  conservative      — minimal safe change, preserve existing behavior fully
-  bottleneck_focused— target the measured performance bottleneck shown in runtime output
+  [Multi-node — operates on a subgraph with a single source and single sink]
+  parallelize — identify independent intermediate nodes and convert serial execution to concurrent
+  pipeline    — convert a chain into streaming mode: each stage starts as soon as the previous produces output
+  stratify    — reorganize tangled cross-layer dependencies into a clean, unidirectional layered structure
 
 Rules:
-- Select a target (function or class) most likely to improve the metric under the given operator+angle.
-- Do NOT repeat targets that appear in the optimization history as failed or stagnant.
+- Identify TWO connected nodes (functions or classes) in the codebase that are the best candidate for the given operator.
+  - Binary operators (insert/merge/decouple/split/extract): node_a calls or directly depends on node_b (A→B edge).
+  - Multi-node operators (parallelize/pipeline/stratify): node_a is the single entry, node_b is the single exit of the target subgraph.
+- node_a is the primary rewrite target; node_b provides structural context.
+- For operators that require creating new nodes, populate the new_nodes array:
+  - insert: one new node C placed between A and B (A→C→B)
+  - split:  two new nodes B1 and B2 that replace B (A→B1, A→B2)
+  - extract: one new shared node C extracted from the A→B edge (A→C←B)
+  - All other operators: omit new_nodes entirely.
+- Do NOT repeat node pairs that appear in the optimization history as failed or stagnant.
 - Return ONLY valid JSON matching the schema—no markdown, no extra text.

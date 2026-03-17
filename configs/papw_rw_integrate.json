@@ -1,0 +1,30 @@
+{
+  "preset": "default",
+  "description": "整合各领域的相关工作写作为完整章节",
+  "long_running": false,
+  "skills": [
+    "skills/papw_related_work_writing.json"
+  ],
+  "agent_name": "papw_rw_integrate",
+  "system_prompt_path": "./prompts/papw_rw_integrate/system.txt",
+  "user_prompt_path": "./prompts/papw_rw_integrate/user.txt",
+  "system_variables": [
+    "tex_template"
+  ],
+  "user_variables": [
+    "done_write"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "tex_code"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "tex_code": {
+        "type": "string",
+        "description": "整合后的 LaTeX 代码"
+      }
+    }
+  }
+}

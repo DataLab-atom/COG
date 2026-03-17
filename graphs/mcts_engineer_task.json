@@ -1,0 +1,46 @@
+{
+  "name": "mcts_engineer_task",
+  "description": "单个原子 Engineer 任务：LLM 生成代码 → AST 语法检查 → 返回 ok/patch/error",
+  "long_running": false,
+  "skills": ["skills/mcts_engineer_task.json"],
+  "variables": [
+    "action",
+    "target_file", "target_type", "target_name",
+    "original_code",
+    "direction", "reasoning"
+  ],
+  "steps": [
+    {
+      "id": "engineer",
+      "type": "agent",
+      "ref": "configs/mcts_engineer.json",
+      "inputs": {
+        "action":        "$.action",
+        "target_file":   "$.target_file",
+        "target_type":   "$.target_type",
+        "target_name":   "$.target_name",
+        "original_code": "$.original_code",
+        "direction":     "$.direction",
+        "reasoning":     "$.reasoning"
+      }
+    },
+    {
+      "id": "ast_check",
+      "type": "tool",
+      "ref": "mcts_ast_check",
+      "depends_on": ["engineer"],
+      "inputs": {
+        "code":        "engineer.code",
+        "target_file": "$.target_file",
+        "target_type": "$.target_type",
+        "target_name": "$.target_name",
+        "action":      "$.action"
+      }
+    }
+  ],
+  "outputs": {
+    "ok":    "ast_check.ok",
+    "patch": "ast_check.patch",
+    "error": "ast_check.error"
+  }
+}

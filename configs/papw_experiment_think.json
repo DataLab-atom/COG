@@ -1,0 +1,33 @@
+{
+  "preset": "default",
+  "description": "实验章节思考子任务：分析实验结果，为写作提供思路",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experiment_writing.json"
+  ],
+  "agent_name": "papw_experiment_think",
+  "system_prompt_path": "./prompts/papw_experiment_think/system.txt",
+  "user_prompt_path": "./prompts/papw_experiment_think/user.txt",
+  "system_variables": [
+    "all_write_task",
+    "all_write_task_plan",
+    "related_think",
+    "done_write"
+  ],
+  "user_variables": [
+    "task_goal"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "think"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "think": {
+        "type": "string",
+        "description": "分析思考内容"
+      }
+    }
+  }
+}

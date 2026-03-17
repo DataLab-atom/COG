@@ -1,0 +1,13 @@
+{
+  "name": "papw_exp_paths",
+  "description": "从 papw_root 派生 experimenting 所需路径并创建目录",
+  "module": "utils.papw_tools",
+  "function": "papw_exp_paths",
+  "parameters": {
+    "type": "object",
+    "required": ["papw_root"],
+    "properties": {
+      "papw_root": { "type": "string", "description": "papw 工作根目录" }
+    }
+  }
+}

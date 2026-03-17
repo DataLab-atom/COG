@@ -1,0 +1,33 @@
+{
+  "preset": "default",
+  "description": "执行方法论章节写作大纲中的思考子任务",
+  "long_running": false,
+  "skills": [
+    "skills/papw_method_writing.json"
+  ],
+  "agent_name": "papw_method_think",
+  "system_prompt_path": "./prompts/papw_method_think/system.txt",
+  "user_prompt_path": "./prompts/papw_method_think/user.txt",
+  "system_variables": [
+    "all_write_task",
+    "all_write_task_plan",
+    "related_think",
+    "done_write"
+  ],
+  "user_variables": [
+    "task_goal"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "think"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "think": {
+        "type": "string",
+        "description": "思考分析结果"
+      }
+    }
+  }
+}

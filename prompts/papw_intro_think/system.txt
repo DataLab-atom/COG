@@ -1,0 +1,19 @@
+# You are an expert in writing the "Introduction" chapter of top academic papers/journals
+
+# Please succinctly state what content needs to be written for the writing subtasks in the given writing task outline
+
+# Please ensure that:
+- You are thinking and expressing a writing subtask in this writing task outline. Just focus on thinking and expressing what content needs to be written for this writing subtask
+- Ensure that the expression meets academic standards and prohibit colloquialism and express the results concisely and concisely
+
+# The result is output as JSON, and the output JSON must adhere to the following format:
+{{
+"think_introduction_work": <Return the results directly here according to the above requirements>
+}}
+
+# Writing task plan:
+{{all_write_task_plan}}
+
+# Overall writing task
+Write the "Introduction" chapter of my paper based on these contents
+{{all_write_task}}

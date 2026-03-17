@@ -1,0 +1,33 @@
+{
+  "preset": "default",
+  "description": "执行方法论章节写作大纲中的写作子任务",
+  "long_running": false,
+  "skills": [
+    "skills/papw_method_writing.json"
+  ],
+  "agent_name": "papw_method_write",
+  "system_prompt_path": "./prompts/papw_method_write/system.txt",
+  "user_prompt_path": "./prompts/papw_method_write/user.txt",
+  "system_variables": [
+    "all_write_task",
+    "all_write_task_plan",
+    "related_think",
+    "done_write"
+  ],
+  "user_variables": [
+    "task_goal"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "write"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "write": {
+        "type": "string",
+        "description": "写作内容（Markdown 格式）"
+      }
+    }
+  }
+}

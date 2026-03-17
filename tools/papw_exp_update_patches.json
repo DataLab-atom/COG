@@ -1,0 +1,15 @@
+{
+  "name": "papw_exp_update_patches",
+  "description": "将新生成的 patch 追加到 patches_so_far，并从 remaining_changes 弹出已处理项",
+  "module": "utils.papw_tools",
+  "function": "papw_exp_update_patches",
+  "parameters": {
+    "type": "object",
+    "required": ["patches_so_far", "new_patch", "remaining_changes"],
+    "properties": {
+      "patches_so_far": { "type": "array", "description": "已生成的 patch 列表" },
+      "new_patch": { "type": "object", "description": "新生成的 patch（含 target_name, file_path, code）" },
+      "remaining_changes": { "type": "array", "description": "剩余变更列表" }
+    }
+  }
+}

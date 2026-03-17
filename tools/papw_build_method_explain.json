@@ -1,0 +1,32 @@
+{
+  "name": "papw_build_method_explain",
+  "description": "从 U2E 精英 patches 和架构 tree 构建 papw 代码目录（Ours.py = U2E 进化后；other/baseline_0/baseline.py = arch 原始代码即 MCTS 起点），并写入 research_information.json",
+  "module": "utils.papw_tools",
+  "function": "papw_build_method_explain",
+  "parameters": {
+    "type": "object",
+    "required": ["tree", "elitist_patches", "requirement", "metric_name", "output_dir"],
+    "properties": {
+      "tree": {
+        "type": "array",
+        "description": "arch_to_project 输出的 tree（fn 节点含 code 字段，为 arch 原始代码）"
+      },
+      "elitist_patches": {
+        "type": "array",
+        "description": "U2E 全局精英个体的 patches 列表，每项含 target_name / code（U2E 进化后代码）"
+      },
+      "requirement": {
+        "type": "string",
+        "description": "原始需求描述，作为 main_research 写入 research_information.json"
+      },
+      "metric_name": {
+        "type": "string",
+        "description": "优化指标名称，作为 method_name 写入 research_information.json"
+      },
+      "output_dir": {
+        "type": "string",
+        "description": "项目输出根目录，papw/ 子目录将在此创建"
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "name": "u2e_build_func_iter_tasks",
+  "description": "合并 loop 状态与 func_tasks 元数据，为每个函数构建完整的 u2e_func_iter_patch 输入 dict；解决 wire 语法无法动态取 func_individual[func_name] 的问题",
+  "long_running": false,
+  "module": "utils.u2e_tools",
+  "function": "u2e_build_func_iter_tasks",
+  "parameters": {
+    "type": "object",
+    "required": ["func_tasks", "func_individual", "func_elitist", "func_structured_memory", "elitist", "elite_archive", "iteration", "function_evals", "sandbox_in_ch", "pop_size", "mutation_rate"],
+    "properties": {
+      "func_tasks": {
+        "type": "array",
+        "description": "u2e_tree_to_func_tasks 产出的函数元数据列表"
+      },
+      "func_individual": {
+        "type": "object",
+        "description": "{func_name: [individual, ...]} 历史累积（loop 状态）"
+      },
+      "func_elitist": {
+        "type": "object",
+        "description": "{func_name: individual | null} 各函数精英（loop 状态）"
+      },
+      "func_structured_memory": {
+        "type": "object",
+        "description": "{func_name: memory_dict} 各函数结构化记忆（loop 状态）"
+      },
+      "elitist": {
+        "type": ["object", "null"],
+        "description": "全局精英个体（loop 状态）"
+      },
+      "elite_archive": {
+        "type": "array",
+        "description": "当前精英档案列表（loop 状态）"
+      },
+      "iteration": {
+        "type": "integer",
+        "description": "当前迭代号（loop 状态）"
+      },
+      "function_evals": {
+        "type": "integer",
+        "description": "当前累计评估次数（loop 状态）"
+      },
+      "sandbox_in_ch": {
+        "type": "string",
+        "description": "共享沙箱会话输入通道 ID"
+      },
+      "pop_size": {
+        "type": "integer",
+        "description": "种群大小"
+      },
+      "mutation_rate": {
+        "type": "number",
+        "description": "变异比例"
+      },
+      "user_generator_prompt": {
+        "type": "string",
+        "description": "user_generator 提示词（默认空字符串）",
+        "default": ""
+      },
+      "external_knowledge": {
+        "type": "string",
+        "description": "外部知识字符串（默认空字符串）",
+        "default": ""
+      },
+      "problem_desc": {
+        "type": "string",
+        "description": "问题描述（默认空字符串）",
+        "default": ""
+      }
+    }
+  }
+}

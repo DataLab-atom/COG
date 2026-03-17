@@ -1,0 +1,8 @@
+Method name: {{method_name}}
+
+Main research: {{main_research}}
+
+Method code:
+```python
+{{method_code}}
+```

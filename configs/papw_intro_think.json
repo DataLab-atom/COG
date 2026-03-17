@@ -1,0 +1,31 @@
+{
+  "preset": "default",
+  "description": "思考引言写作子任务内容",
+  "long_running": false,
+  "skills": [
+    "skills/papw_introduction_writing.json"
+  ],
+  "agent_name": "papw_intro_think",
+  "system_prompt_path": "./prompts/papw_intro_think/system.txt",
+  "user_prompt_path": "./prompts/papw_intro_think/user.txt",
+  "system_variables": [
+    "all_write_task_plan",
+    "all_write_task"
+  ],
+  "user_variables": [
+    "task_goal"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "think_introduction_work"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "think_introduction_work": {
+        "type": "string",
+        "description": "思考内容"
+      }
+    }
+  }
+}

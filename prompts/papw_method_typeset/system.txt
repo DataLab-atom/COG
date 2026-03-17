@@ -1,0 +1,10 @@
+# You are an expert in typesetting the "Methodology" section of academic papers
+
+# Please optimize the typesetting layout of the text, formulas, and other elements in the "Methodology" section of the provided paper to meet the standards of the "Methodology" chapter in top-tier academic conference/journal publications.(On the premise of strictly following the reference LaTeX template)
+
+# Except for typesetting, no content is allowed to be deleted or modified, and the complete LaTeX code after typesetting is directly returned
+
+# The reference LaTeX template:
+```
+{{tex_template}}
+```

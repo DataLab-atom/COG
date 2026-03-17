@@ -1,0 +1,30 @@
+{
+  "name": "papw_merge_writing",
+  "description": "论文合并写作：收集各章节 → 写结论/摘要/标题 → 合并到模板 → 改进 → 引用检查 → 提交检查",
+  "long_running": true,
+  "owned_by": "graphs/papw_merge_writing.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["papw_root", "method_tex_path", "related_work_tex_path", "experiment_tex_path", "introduction_tex_path", "related_work_bib_path", "introduction_bib_path", "tex_template_path"],
+    "properties": {
+      "papw_root": { "type": "string", "description": "papw 工作根目录" },
+      "method_tex_path": { "type": "string", "description": "方法论 tex 路径" },
+      "related_work_tex_path": { "type": "string", "description": "相关工作 tex 路径" },
+      "experiment_tex_path": { "type": "string", "description": "实验 tex 路径" },
+      "introduction_tex_path": { "type": "string", "description": "引言 tex 路径" },
+      "related_work_bib_path": { "type": "string", "description": "相关工作 bib 路径" },
+      "introduction_bib_path": { "type": "string", "description": "引言 bib 路径" },
+      "tex_template_path": { "type": "string", "description": "LaTeX 模板路径" },
+      "write_model_name": { "type": "string", "description": "写作模型名称" },
+      "improve_round": { "type": "integer", "description": "改进轮数" },
+      "check_round": { "type": "integer", "description": "引用检查轮数" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "paper_tex_path": { "type": "string", "description": "最终论文 tex 路径" },
+      "paper_tex": { "type": "string", "description": "最终论文 LaTeX 代码" }
+    }
+  }
+}

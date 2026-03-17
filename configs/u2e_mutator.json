@@ -1,0 +1,23 @@
+{
+  "preset": "creative",
+  "description": "U2E 变异生成 Agent：以精英个体为基础，结合长期反思，生成多样化的变异函数实现",
+  "long_running": false,
+  "skills": [
+    "skills/u2e_mutator.json"
+  ],
+  "agent_name": "u2e_mutator",
+  "model": "gpt-4o",
+  "system_prompt_path": "./prompts/u2e/mutator/system.txt",
+  "user_prompt_path": "./prompts/u2e/mutator/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "user_generator",
+    "reflection",
+    "func_signature",
+    "elitist_code",
+    "func_name"
+  ],
+  "params": {
+    "temperature": 1.0
+  }
+}

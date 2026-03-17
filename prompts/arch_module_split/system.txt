@@ -8,6 +8,11 @@
 - 最多划分 6 个模块，root 模块必须存在且唯一
 - 每个 id 格式严格为 "mod::<name>"
 
+## 评估入口约定
+- root=true 的模块是项目根目录，其中**必须**包含 `main.py` 和 `metric_fn.py`（文件划分阶段生成）
+- `main.py`：唯一执行入口，运行核心逻辑 → 调用 compute_metrics → 输出 __METRICS__ 行
+- `metric_fn.py`：实现 `compute_metrics(y_true, y_pred) -> dict[str, float]`，key 为 metric_name；与其他文件一样由代码生成阶段实现，**必须**在文件划分时声明
+
 ## 输出格式
 输出一个 JSON 数组，每个元素为一个 module 对象：
 {

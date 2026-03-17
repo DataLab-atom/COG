@@ -1,0 +1,30 @@
+{
+  "preset": "default",
+  "description": "生成实验分析总结",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experimenting.json"
+  ],
+  "agent_name": "papw_exp_analysis",
+  "system_prompt_path": "./prompts/papw_exp_analysis/system.txt",
+  "user_prompt_path": "./prompts/papw_exp_analysis/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "perspective_info",
+    "metrics",
+    "output_log"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "experiment_analysis"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "experiment_analysis": {
+        "type": "string",
+        "description": "实验分析总结"
+      }
+    }
+  }
+}

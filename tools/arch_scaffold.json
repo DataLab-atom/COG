@@ -2,7 +2,7 @@
   "name": "arch_scaffold",
   "description": "根据架构树静态生成目录结构和代码骨架（imports + 类定义 + 函数 stub），返回 {file_path: skeleton_code} 映射",
   "long_running": false,
-  "module": "arch.scaffold",
+  "module": "utils.arch.scaffold",
   "function": "arch_scaffold",
   "parameters": {
     "type": "object",

@@ -1,0 +1,16 @@
+{
+  "name": "papw_format_chapters",
+  "description": "将各章节内容格式化为单一文本",
+  "module": "utils.papw_tools",
+  "function": "papw_format_chapters",
+  "parameters": {
+    "type": "object",
+    "required": ["introduction", "related_work", "methodology", "experiments"],
+    "properties": {
+      "introduction": { "type": "string", "description": "引言内容" },
+      "related_work": { "type": "string", "description": "相关工作内容" },
+      "methodology": { "type": "string", "description": "方法论内容" },
+      "experiments": { "type": "string", "description": "实验内容" }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "papw_exp_save_perspectives",
+  "description": "为每个分析角度创建目录并保存信息",
+  "module": "utils.papw_tools",
+  "function": "papw_exp_save_perspectives",
+  "parameters": {
+    "type": "object",
+    "required": ["perspective_base", "perspectives"],
+    "properties": {
+      "perspective_base": { "type": "string", "description": "角度根目录" },
+      "perspectives": { "type": "array", "description": "角度列表" }
+    }
+  }
+}

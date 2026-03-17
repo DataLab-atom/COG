@@ -1,0 +1,30 @@
+{
+  "name": "u2e_aggregate_sandbox_results",
+  "description": "将沙盒评估结果聚合回 individual 列表，写入 exec_success/obj/score 字段；方向转换：MCTS score（越高越好）→ U2E obj = -score（越低越好）",
+  "long_running": false,
+  "module": "utils.u2e_tools",
+  "function": "u2e_aggregate_sandbox_results",
+  "parameters": {
+    "type": "object",
+    "required": ["eval_results", "valid_population", "invalid_population"],
+    "properties": {
+      "eval_results": {
+        "type": "array",
+        "description": "map(u2e_eval_via_mcts_sandbox) 的结果列表，与 valid_population 一一对应"
+      },
+      "valid_population": {
+        "type": "array",
+        "description": "有效个体列表（来自 u2e_build_sandbox_eval_tasks.valid_population）"
+      },
+      "invalid_population": {
+        "type": "array",
+        "description": "已预标无效个体列表（来自 u2e_build_sandbox_eval_tasks.invalid_population）"
+      },
+      "function_evals": {
+        "type": "integer",
+        "description": "当前累计评估次数（默认 0）",
+        "default": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "papw_method_writing",
+  "description": "方法论章节写作：规划写作大纲 → 递归执行 think/write 子任务 → 整合 → 优化 → 生成 LaTeX → 排版，输出 method.tex",
+  "long_running": true,
+  "owned_by": "graphs/papw_method_writing.json",
+  "input_schema": {
+    "type": "object",
+    "required": ["our_method_path", "research_information_path", "tex_template_path", "result_write_path"],
+    "properties": {
+      "our_method_path":            { "type": "string",  "description": "方法代码文件路径（Ours.py）" },
+      "research_information_path":  { "type": "string",  "description": "研究信息 JSON 文件路径" },
+      "tex_template_path":          { "type": "string",  "description": "LaTeX 模板文件路径" },
+      "result_write_path":          { "type": "string",  "description": "结果 .tex 输出路径" },
+      "write_model_name":           { "type": "string",  "description": "写作模型名称", "default": "gpt-4.1-mini" },
+      "integration_model_name":     { "type": "string",  "description": "整合模型名称", "default": "gpt-4.1-mini" },
+      "improve_round":              { "type": "integer", "description": "优化轮数", "default": 2 }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "tex_path":  { "type": "string", "description": "保存的 .tex 文件路径" },
+      "tex_code":  { "type": "string", "description": "最终 LaTeX 代码" }
+    }
+  }
+}

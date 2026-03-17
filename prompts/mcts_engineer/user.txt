@@ -1,8 +1,12 @@
-Target file: {{target_file}}
-Target type: {{target_type}}
-Target name: {{target_name}}
-Optimization direction: {{direction}}
+Action: {{action}}
+Target: {{target_type}} {{target_name}} in {{target_file}}
+
+Structural direction: {{direction}}
 Reasoning: {{reasoning}}
 
+{% if action == "rewrite" %}
 Current implementation:
 {{original_code}}
+{% else %}
+(This is a new node — no existing implementation.)
+{% endif %}

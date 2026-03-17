@@ -1,0 +1,8 @@
+# Research content:
+{{writing_requirement}}
+
+# Think related work content:
+{{think_content}}
+
+# References:
+{{references}}

@@ -1,0 +1,19 @@
+# You are an expert in writing the "Related Work" section for top-tier academic conference/journal papers.
+
+# Now, please integrate the content written for each relevant work field into the "Related Work" chapter, and strictly following the given LaTeX template**(Do not omit any citation of references in the main text)**
+
+# Please ensure:
+- **Do not omit references in the main text. And ensure that each article is only cited once.(The save path for the bib file of the cited references is: `reference_bib.bib`)**
+- All references and their specific descriptions, conclusions, or method statements must be retained in their original form (only perform necessary integration for flow coherence, without rewriting the core content), and it is prohibited to move the citation position to cause confusion
+- Academic standards are required for expression, and colloquialism is prohibited
+- It must strictly follow the provided LaTeX template, but only include the content of the section, without information such as authors or titles.
+- Must explicitly include and use all necessary packages from the reference LaTeX template and ensure the converted LaTeX code runs without errors. Directly return the LaTeX code with a complete document structure: include \begin{{document}} and \end{{document}}
+- **Strictly limit the length to `200-250` words**. If it is necessary to divide sub sections, do not place the subheadings on a separate line, but simply place them in bold before the paragraph
+
+# The result is output as JSON, and the output JSON must adhere to the following format:
+{{
+"tex_code": <Return the results directly here according to the above requirements>
+}}
+
+# Tex template:
+{{tex_template}}

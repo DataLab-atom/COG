@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-base: #0d0f14;
+  --color-surface: #151820;
+  --color-elevated: #1e2230;
+  --color-overlay: #252a3a;
+  --color-subtle: #2a2f42;
+  --color-strong: #3d4560;
+  --color-primary: #e8eaf2;
+  --color-secondary: #8a90a8;
+  --color-muted: #545975;
+  --color-blue: #4f8ef7;
+  --color-teal: #34c8a0;
+  --color-amber: #f5a623;
+  --color-danger: #e05c5c;
+  --color-purple: #9b7ef8;
+
+  --color-data-1: #4f8ef7;
+  --color-data-2: #34c8a0;
+  --color-data-3: #9b7ef8;
+  --color-data-4: #f5a623;
+  --color-data-5: #e05c5c;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@layer base {
+  body {
+    background: var(--color-base);
+    color: var(--color-primary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--color-surface); }
+  ::-webkit-scrollbar-thumb { background: var(--color-strong); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }
+}
+
+/* Animations */
+@keyframes pulse-ring {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 6px 2px rgba(52,200,160,0.3); }
+  50%      { box-shadow: 0 0 14px 4px rgba(52,200,160,0.6); }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+.animate-pulse-ring { animation: pulse-ring 1.5s ease-in-out infinite; }
+.animate-glow       { animation: glow 2s ease-in-out infinite; }
+.animate-slide-down { animation: slide-down 0.2s ease-out; }
+.animate-shake      { animation: shake 0.3s ease-in-out; }
+
+/* Button hover — replaces JS onMouseEnter/Leave */
+.btn-hover:hover { filter: brightness(1.15); }
+.btn-ghost-danger:hover { background: rgba(224,92,92,0.12); }
+.btn-ghost-blue:hover { background: rgba(79,142,247,0.12); }
+.btn-ghost-teal:hover { background: rgba(52,200,160,0.12); }
+.btn-ghost-amber:hover { background: rgba(245,166,35,0.12); }
+.btn-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }

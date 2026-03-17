@@ -1,0 +1,21 @@
+{
+  "name": "arch_write_patches",
+  "description": "将 MCTS 风格的 patch 列表永久写入磁盘文件，用 AST 定位目标函数/类并就地替换，保留文件其余内容不变",
+  "long_running": false,
+  "module": "utils.arch.runtime_fix",
+  "function": "arch_write_patches",
+  "parameters": {
+    "type": "object",
+    "required": ["patches", "output_dir"],
+    "properties": {
+      "patches": {
+        "type": "array",
+        "description": "patch 列表，每项格式：{target_file, target_type, target_name, code}"
+      },
+      "output_dir": {
+        "type": "string",
+        "description": "项目根目录绝对路径，target_file 为相对此目录的路径"
+      }
+    }
+  }
+}

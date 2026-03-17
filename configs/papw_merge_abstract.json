@@ -1,0 +1,29 @@
+{
+  "preset": "default",
+  "description": "根据各章节和结论撰写论文摘要",
+  "long_running": false,
+  "skills": [
+    "skills/papw_merge_writing.json"
+  ],
+  "agent_name": "papw_merge_abstract",
+  "system_prompt_path": "./prompts/papw_merge_abstract/system.txt",
+  "user_prompt_path": "./prompts/papw_merge_abstract/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "chapters_and_conclusion",
+    "conclusion"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "abstract"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "abstract": {
+        "type": "string",
+        "description": "论文摘要"
+      }
+    }
+  }
+}

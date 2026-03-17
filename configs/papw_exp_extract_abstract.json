@@ -1,0 +1,28 @@
+{
+  "preset": "default",
+  "description": "从论文 Markdown 中提取摘要",
+  "long_running": false,
+  "skills": [
+    "skills/papw_experimenting.json"
+  ],
+  "agent_name": "papw_exp_extract_abstract",
+  "system_prompt_path": "./prompts/papw_exp_extract_abstract/system.txt",
+  "user_prompt_path": "./prompts/papw_exp_extract_abstract/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "paper_content"
+  ],
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "abstract"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "abstract": {
+        "type": "string",
+        "description": "论文摘要"
+      }
+    }
+  }
+}

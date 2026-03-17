@@ -1,0 +1,125 @@
+{
+  "name": "arch_then_mcts_then_u2e_ppw",
+  "description": "端到端科学代码生成与论文写作全流程：需求描述 → 架构生成 → 代码生成 → MCTS Beam Search 优化 → U2E 进化优化 → papw 论文写作（文献下载 → 向量数据库 → 实验分析 → 四章节并行写作 → 合并输出 paper.tex）",
+  "long_running": true,
+  "skills": [
+    "skills/arch_then_mcts_then_u2e_ppw.json"
+  ],
+  "variables": [
+    "requirement",
+    "output_dir",
+    "arch_gate_channel_id",
+    "mcts_gate_channel_id",
+    "sandbox_timeout",
+    "beam_width",
+    "consecutive_bad_limit",
+    "max_generations",
+    "pop_size",
+    "mutation_rate",
+    "max_fe",
+    "user_generator_prompt",
+    "external_knowledge",
+    "existing_project_root",
+    "existing_direction",
+    "enable_papw",
+    "tex_template_path",
+    "reference_bib_path",
+    "expand_references",
+    "s2_api_key",
+    "text_model_name",
+    "write_model_name",
+    "embedding_model",
+    "embedding_model_source",
+    "reranker_path",
+    "reranker_model_source",
+    "database_device",
+    "pdf_transform_mode",
+    "pdf_md_token",
+    "all_paper_num",
+    "unpaywall_email"
+  ],
+  "steps": [
+    {
+      "id": "u2e_pipeline",
+      "type": "graph",
+      "ref": "graphs/arch_then_mcts_then_u2e.json",
+      "inputs": {
+        "requirement": "$.requirement",
+        "output_dir": "$.output_dir",
+        "arch_gate_channel_id": "$.arch_gate_channel_id",
+        "mcts_gate_channel_id": "$.mcts_gate_channel_id",
+        "sandbox_timeout": "$.sandbox_timeout",
+        "beam_width": "$.beam_width",
+        "consecutive_bad_limit": "$.consecutive_bad_limit",
+        "max_generations": "$.max_generations",
+        "pop_size": "$.pop_size",
+        "mutation_rate": "$.mutation_rate",
+        "max_fe": "$.max_fe",
+        "user_generator_prompt": "$.user_generator_prompt",
+        "external_knowledge": "$.external_knowledge",
+        "existing_project_root": "$.existing_project_root",
+        "existing_direction": "$.existing_direction"
+      }
+    },
+    {
+      "id": "papw_branch",
+      "type": "cond",
+      "depends_on": ["u2e_pipeline"],
+      "condition": "{{enable_papw}}",
+      "if_true": {
+        "type": "graph",
+        "ref": "graphs/papw_full.json",
+        "inputs": {
+          "output_dir": "$.output_dir",
+          "requirement": "$.requirement",
+          "project_tree": "u2e_pipeline.project_tree",
+          "metric_name": "u2e_pipeline.metric_name",
+          "elitist_patches?": "u2e_pipeline.u2e_elitist.patches",
+          "mcts_best_patches?": "u2e_pipeline.mcts_best_node.patches",
+          "tex_template_path": "$.tex_template_path",
+          "reference_bib_path": "$.reference_bib_path",
+          "expand_references": "$.expand_references",
+          "s2_api_key": "$.s2_api_key",
+          "text_model_name": "$.text_model_name",
+          "write_model_name": "$.write_model_name",
+          "embedding_model": "$.embedding_model",
+          "embedding_model_source": "$.embedding_model_source",
+          "reranker_path": "$.reranker_path",
+          "reranker_model_source": "$.reranker_model_source",
+          "database_device": "$.database_device",
+          "pdf_transform_mode": "$.pdf_transform_mode",
+          "pdf_md_token": "$.pdf_md_token",
+          "all_paper_num": "$.all_paper_num",
+          "unpaywall_email": "$.unpaywall_email"
+        }
+      },
+      "if_false": {
+        "type": "tool",
+        "ref": "echo",
+        "inputs": {
+          "text": "papw branch disabled (enable_papw is falsy)"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "arch_ok": "u2e_pipeline.arch_ok",
+    "arch_errors": "u2e_pipeline.arch_errors",
+    "metric_name": "u2e_pipeline.metric_name",
+    "direction": "u2e_pipeline.direction",
+    "baseline_score": "u2e_pipeline.baseline_score",
+    "mcts_best_node": "u2e_pipeline.mcts_best_node",
+    "u2e_elitist": "u2e_pipeline.u2e_elitist",
+    "u2e_best_obj": "u2e_pipeline.u2e_best_obj",
+    "function_evals": "u2e_pipeline.function_evals",
+    "bib_path": "papw_branch.bib_path",
+    "experiment_vb_path": "papw_branch.experiment_vb_path",
+    "full_text_vb_path": "papw_branch.full_text_vb_path",
+    "perspectives": "papw_branch.perspectives",
+    "method_tex": "papw_branch.method_tex",
+    "related_work_tex": "papw_branch.related_work_tex",
+    "experiment_tex": "papw_branch.experiment_tex",
+    "introduction_tex": "papw_branch.introduction_tex",
+    "paper_tex": "papw_branch.paper_tex"
+  }
+}

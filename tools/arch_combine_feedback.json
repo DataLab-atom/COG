@@ -1,0 +1,31 @@
+{
+  "name": "arch_combine_feedback",
+  "description": "将原始需求和人类反馈合并为增强需求描述，供 arch_build 重新生成架构；可选嵌入 metric_name/direction 以锁定评估指标",
+  "long_running": false,
+  "module": "utils.arch.design_patch",
+  "function": "arch_combine_feedback",
+  "parameters": {
+    "type": "object",
+    "required": ["requirement", "feedback"],
+    "properties": {
+      "requirement": {
+        "type": "string",
+        "description": "原始需求描述"
+      },
+      "feedback": {
+        "type": "string",
+        "description": "人类反馈文本"
+      },
+      "metric_name": {
+        "type": "string",
+        "description": "评估指标名（非空时嵌入增强需求以锁定指标）",
+        "default": ""
+      },
+      "direction": {
+        "type": "string",
+        "description": "优化方向 max 或 min",
+        "default": ""
+      }
+    }
+  }
+}

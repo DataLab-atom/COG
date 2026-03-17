@@ -1,0 +1,57 @@
+{
+  "description": "U2E 结构化长期反思 Agent：将本轮短期反思与历史结构化记忆融合，输出分三类（principles / failed_patterns / best_tricks）的 JSON 记忆对象，持续积累跨代知识",
+  "long_running": false,
+  "skills": [
+    "skills/u2e_structured_reflector.json"
+  ],
+  "agent_name": "u2e_structured_reflector",
+  "model": "gpt-4o-mini",
+  "system_prompt_path": "./prompts/u2e/structured_reflector/system.txt",
+  "user_prompt_path": "./prompts/u2e/structured_reflector/user.txt",
+  "system_variables": [],
+  "user_variables": [
+    "problem_desc",
+    "prior_memory",
+    "new_reflections"
+  ],
+  "json_output": true,
+  "json_schema": {
+    "type": "object",
+    "required": [
+      "principles",
+      "failed_patterns",
+      "best_tricks"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "principles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "通用算法原则，每条不超过 30 词"
+      },
+      "failed_patterns": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "已证无效或有害的代码模式或策略"
+      },
+      "best_tricks": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "带来实际性能提升的具体实现技巧"
+      }
+    }
+  },
+  "enable_history": false,
+  "timeout": 30.0,
+  "max_retries": 2,
+  "params": {
+    "max_tokens": 512,
+    "temperature": 0.7
+  }
+}

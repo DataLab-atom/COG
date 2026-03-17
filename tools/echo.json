@@ -1,0 +1,16 @@
+{
+  "name": "echo",
+  "description": "原样返回输入文本，并附带字符数统计。适用于调试、数据透传和测试场景",
+  "module": "utils.text_utils",
+  "function": "echo",
+  "parameters": {
+    "type": "object",
+    "required": ["text"],
+    "properties": {
+      "text": {
+        "type": "string",
+        "description": "要原样返回的文本内容"
+      }
+    }
+  }
+}

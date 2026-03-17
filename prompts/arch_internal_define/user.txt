@@ -1,6 +1,13 @@
 ## 需求描述
 {{requirement}}
 
+## 评估指标
+- 指标名：{{metric_name}}
+- 优化方向：{{direction}}（minimize = 越小越好，maximize = 越大越好）
+- metric_fn.py 是独立评估模块，包含 compute_metrics 等验证/评估函数（可不止一个）
+- 若当前目标为 metric_fn 文件中的函数，定义其完整签名（params / returns）供其他文件引用
+- 若当前目标为 main.py 中的函数，需在 calls 中引用 fn::compute_metrics
+
 ## 当前文件
 {{file_json}}
 

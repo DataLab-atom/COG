@@ -1,0 +1,17 @@
+{
+  "name": "arch_batch_fix_imports",
+  "description": "批量扫描项目所有 .py 文件，自动添加缺失的 typing/library imports（如 Any, Tuple, np, pd 等），避免 fix_loop 逐个修复的低效问题",
+  "long_running": false,
+  "module": "utils.arch.runtime_fix",
+  "function": "arch_batch_fix_imports",
+  "parameters": {
+    "type": "object",
+    "required": ["output_dir"],
+    "properties": {
+      "output_dir": {
+        "type": "string",
+        "description": "项目根目录绝对路径"
+      }
+    }
+  }
+}
