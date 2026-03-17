@@ -1,0 +1,12 @@
+{
+  "id": "openclaw-mcts",
+  "name": "COG MCTS Search Engine",
+  "description": "Git-native Monte Carlo Tree Search for structural code optimization on any git repository.",
+  "kind": "agent-tool",
+  "skills": ["./skills"],
+  "agents": ["./agents"],
+  "tools": {
+    "server": "./mcts-engine/server.py",
+    "alsoAllow": ["lobster", "canvas", "tmux"]
+  }
+}

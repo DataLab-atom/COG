@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcts-engine"
+version = "0.1.0"
+description = "COG MCTS search engine — MCP server for git-native code search"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.0",
+    "pydantic>=2.0",
+]
+
+[project.scripts]
+mcts-engine = "server:main"
