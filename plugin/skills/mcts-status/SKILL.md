@@ -1,3 +1,8 @@
+---
+name: mcts-status
+description: "Show current MCTS search progress"
+---
+
 # /mcts-status
 
 Show current search progress.

@@ -1,3 +1,8 @@
+---
+name: mcts-rollback
+description: "Revert the search frontier to the previous generation"
+---
+
 # /mcts-rollback
 
 Revert the search frontier to the previous generation.

@@ -1,3 +1,8 @@
+---
+name: mcts-report
+description: "Generate a search report: tree lineage, op analysis, best diff"
+---
+
 # /mcts-report
 
 Generate a search report: tree lineage, op analysis, best diff.
